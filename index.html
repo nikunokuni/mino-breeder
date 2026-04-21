@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ミノ・ブリーダー v25</title>
+    <style>
+        :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; }
+        
+        body { 
+            background-color: #1a1a1a;
+            background-image: linear-gradient(rgba(26, 26, 26, 0.5), rgba(26, 26, 26, 0.5)), url('youtube header.jpg');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            color: white; font-family: sans-serif; margin: 0; padding: 10px; touch-action: manipulation; 
+        }
+        
+        #game-screen { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; justify-content: center; align-items: flex-start; }
+        .left-area { flex: 1; max-width: 600px; display: flex; flex-direction: column; gap: 15px; }
+        
+        /* 遊び方：2x2レイアウト */
+        .manual { background: rgba(51, 51, 51, 0.85); padding: 15px; border-radius: 8px; font-size: 13px; line-height: 1.4; border: 1px solid #555; box-sizing: border-box; backdrop-filter: blur(5px); }
+        .manual b { color: var(--main-gold); display: block; margin-bottom: 8px; }
+        .manual ul { 
+            margin: 0; padding: 0; list-style: none; 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        }
+        .manual li { display: flex; align-items: center; }
+        .manual li.full-row { grid-column: span 2; margin-top: 4px; border-top: 1px solid #555; padding-top: 8px; }
+
+        .icon { width: 16px; height: 16px; display: inline-block; margin-right: 6px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+        .icon.soft { background: var(--main-red); }
+        .icon.hard { background: var(--main-cyan); }
+        .icon.gold { background: var(--main-gold); }
+        .icon.bomb { background: #ff4500; position: relative; }
+        .icon.bomb::after { content: ''; position: absolute; width: 6px; height: 6px; background: white; border-radius: 50%; top: 5px; left: 5px; }
+
+        .main-panel { background: rgba(42, 42, 42, 0.9); border-radius: 10px; padding: 15px; box-sizing: border-box; backdrop-filter: blur(5px); }
+        .panel-grid { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 15px; }
+
+        .info-box { background: #111; padding: 10px; border-radius: 5px; font-size: 14px; border-left: 4px solid var(--main-gold); margin-bottom: 10px; font-weight: bold; }
+        .high-score { float: right; color: var(--main-gold); }
+
+        .stat-row { margin-bottom: 8px; font-size: 11px; }
+        .stat-bar { background: #444; height: 6px; width: 100%; margin-top: 3px; border-radius: 3px; overflow: hidden; }
+        .stat-fill { background: var(--main-cyan); height: 100%; transition: width 0.3s; }
+        .gold-fill { background: var(--main-gold); }
+        .bomb-fill { background: #ff4500; }
+        .gravity-fill { background: #ff00ff; }
+
+        h3 { margin: 0 0 8px 0; font-size: 13px; color: var(--main-cyan); border-bottom: 1px solid #444; padding-bottom: 4px; }
+        .btn-group { display: flex; flex-direction: column; gap: 6px; }
+        .spacer { margin-top: 10px; }
+
+        button { padding: 9px; cursor: pointer; border: none; border-radius: 5px; background: #444; color: white; font-size: 11px; font-weight: bold; text-align: left; }
+        button:hover { background: #555; }
+        .cost-tag { float: right; color: #ff8888; font-size: 10px; }
+
+        .start-btn { background: var(--main-gold); color: #000; width: 100%; text-align: center; font-size: 16px; height: 50px; margin-top: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 5px; }
+        .preview-area { background: #111; border: 1px solid #444; border-radius: 5px; padding: 8px; margin-top: 10px; text-align: center; }
+        #preview-canvas { background: #000; }
+
+        .right-area { flex: 0 0 320px; text-align: center; }
+        #score-display { margin: 0; color: var(--main-gold); font-size: 32px; font-weight: bold; }
+        #mino-count-display { color: #aaa; font-size: 14px; margin-bottom: 10px; font-weight: bold; }
+        canvas#stage { border: 2px solid #555; background: rgba(0,0,0,0.9); width: 300px; height: 85vh; max-height: 800px; }
+        
+        #controls { display: none; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; width: 300px; margin-left: auto; margin-right: auto; }
+        .ctrl-btn { height: 60px; background: #333; border: 2px solid #555; color: white; font-size: 24px; display: flex; align-items: center; justify-content: center; border-radius: 10px; user-select: none; }
+
+        @media (max-width: 900px) {
+            #game-screen { flex-direction: column; align-items: center; }
+            .left-area, .right-area { width: 100%; max-width: 600px; }
+            .manual ul { grid-template-columns: 1fr 1fr; }
+            #controls { display: grid; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-screen">
+    <div class="left-area">
+        <div class="manual">
+            <b>【遊び方】ミノを10個積み上げて得点を競うよ</b>
+            <ul>
+                <li><span class="icon soft"></span>下まで落ちる</li>
+                <li><span class="icon hard"></span>その場に固定</li>
+                <li><span class="icon gold"></span>得点2倍！</li>
+                <li><span class="icon bomb"></span>周りを爆発！</li>
+                <li class="full-row">横一列そろえると一列につき<b>300点ボーナス</b></li>
+            </ul>
+        </div>
+
+        <div class="main-panel">
+            <div class="info-box">
+                HP: <span id="hp">120</span> | 回数: <span id="turns">10</span>
+                <span class="high-score">BEST: <span id="high-score">0</span></span>
+            </div>
+
+            <div class="panel-grid">
+                <div class="status-col">
+                    <h3>ステータス</h3>
+                    <div class="stat-row">数: <span id="val-a">4.0</span> <div class="stat-bar"><div id="bar-a" class="stat-fill"></div></div></div>
+                    <div class="stat-row">固さ: <span id="val-b">2.0</span> <div class="stat-bar"><div id="bar-b" class="stat-fill"></div></div></div>
+                    <div class="stat-row">シンプル: <span id="val-c">4.0</span> <div class="stat-bar"><div id="bar-c" class="stat-fill"></div></div></div>
+                    <div class="stat-row">得点UP: <span id="val-d">0.0</span> <div class="stat-bar"><div id="bar-d" class="stat-fill gold-fill"></div></div></div>
+                    <div class="stat-row">爆弾: <span id="val-e">0.0</span> <div class="stat-bar"><div id="bar-e" class="stat-fill bomb-fill"></div></div></div>
+                    <div class="stat-row">重力: <span id="val-g">1.00</span> <div class="stat-bar"><div id="bar-g" class="stat-fill gravity-fill"></div></div></div>
+                    <div class="preview-area"><canvas id="preview-canvas" width="120" height="120"></canvas></div>
+                </div>
+
+                <div class="train-col">
+                    <h3>トレーニング</h3>
+                    <div class="btn-group">
+                        <button onclick="train('A')">筋力トレ (数+1.5~2, 爆弾+0.1) <span class="cost-tag">HP-10</span></button>
+                        <button onclick="train('B')">硬化訓練 (固さ+1.5~2, 爆弾+0.1) <span class="cost-tag">HP-10</span></button>
+                        <button onclick="train('C')">集中講義 (シンプル+1.5~2, 爆弾+0.1) <span class="cost-tag">HP-10</span></button>
+                        <button class="spacer" onclick="train('E')">効率重視 (数+1, ｼﾝﾌﾟﾙ+1, 爆弾+0.2, 固さ半減) <span class="cost-tag">HP-10</span></button>
+                        <button onclick="train('I')">精密研磨 (ｼﾝﾌﾟﾙ+1.5, 得点+0.5~0.7, 爆弾+0.1~0.3) <span class="cost-tag">HP-20</span></button>
+                        <button onclick="train('D')">得点研究 (数+1, 得点+0.6~0.8, 爆弾+0.1~0.3) <span class="cost-tag">HP-20</span></button>
+                        <button onclick="train('F')">禁断の錬金術 (得点UP+1, 爆弾+1) <span class="cost-tag">HP-30</span></button>
+                        <button onclick="train('G')">重力研究 (重力-10%, 爆弾-0.6) <span class="cost-tag">HP-15</span></button>
+                        <button onclick="train('H')">破壊的進展 (数+5, 爆弾+1.2, 他半減) <span class="cost-tag">HP-40</span></button>
+                        <button onclick="train('REST')" style="background:#2e7d32; margin-top:5px;">休憩 (HP+60) <span class="cost-tag" style="color:white">回数-1</span></button>
+                    </div>
+                </div>
+            </div>
+            <button id="start-btn" class="start-btn" onclick="finishBreeding()">育成完了：パズル開始</button>
+        </div>
+    </div>
+
+    <div class="right-area">
+        <div id="score-display">0</div>
+        <div id="mino-count-display">NEXT: 1 / 10</div>
+        <canvas id="stage" width="300" height="900"></canvas>
+        <div id="controls">
+            <div class="ctrl-btn" onmousedown="move(-1,0)" ontouchstart="move(-1,0)">←</div>
+            <div class="ctrl-btn" onmousedown="move(0,1)" ontouchstart="move(0,1)">↓</div>
+            <div class="ctrl-btn" onmousedown="move(1,0)" ontouchstart="move(1,0)">→</div>
+            <div></div>
+            <div class="ctrl-btn" style="color:var(--main-cyan)" onmousedown="rotate()" ontouchstart="rotate()">↻</div>
+        </div>
+    </div>
+</div>
+
+<script>
+const COLS = 20, ROWS = 60, SIZE = 15;
+let stats = { a: 4.0, b: 2.0, c: 4.0, d: 0.0, e: 0.0, g: 1.0 };
+let hp = 120, maxHp = 120, turns = 10, minoRemaining = 10, minoCount = 0;
+let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+let currentPiece = null, score = 0, isGameOver = false, lastTime = 0;
+let highScore = localStorage.getItem('mino_breeder_highscore') || 0;
+const colors = { hard: "#00ffcc", soft: "#ff4444", gold: "#ffd700", bomb: "#ff4500" };
+
+document.getElementById('high-score').innerText = highScore;
+
+// 乱数生成補助
+const rnd = (min, max) => Math.random() * (max - min) + min;
+
+function generateBlockData() {
+    let blocks = [];
+    const countA = Math.max(1, Math.floor(stats.a));
+    for(let i=0; i < countA; i++) {
+        if(i === 0) blocks.push({x: 0, y: 0, type: "soft"});
+        else {
+            let targetBlock = (Math.random() * 15 < stats.c) ? [...blocks].sort((a,b)=>(b.x**2+b.y**2)-(a.x**2+a.y**2))[0] : blocks[Math.floor(Math.random()*blocks.length)];
+            for(let d of [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].sort(()=>Math.random()-0.5)) {
+                let nx = targetBlock.x + d.x, ny = targetBlock.y + d.y;
+                if (!blocks.some(b => b.x === nx && b.y === ny)) { blocks.push({ x: nx, y: ny, type: "soft" }); break; }
+            }
+        }
+    }
+    let indices = blocks.map((_, i) => i).sort(()=>Math.random()-0.5);
+    let cur = 0;
+    for(let i=0; i < Math.floor(stats.e) && cur < indices.length; i++) blocks[indices[cur++]].type = "bomb";
+    for(let i=0; i < Math.floor(stats.d) && cur < indices.length; i++) blocks[indices[cur++]].type = "gold";
+    for(let i=0; i < Math.floor(stats.b) && cur < indices.length; i++) blocks[indices[cur++]].type = "hard";
+    return blocks;
+}
+
+function updatePreview() {
+    const canvas = document.getElementById('preview-canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const blocks = generateBlockData();
+    if(blocks.length === 0) return;
+    let minX=0, maxX=0, minY=0, maxY=0;
+    blocks.forEach(b => { minX=Math.min(minX, b.x); maxX=Math.max(maxX, b.x); minY=Math.min(minY, b.y); maxY=Math.max(maxY, b.y); });
+    const pSize = 8;
+    const cx = canvas.width/2 - ((maxX+minX+1)*pSize)/2;
+    const cy = canvas.height/2 - ((maxY+minY+1)*pSize)/2;
+    blocks.forEach(b => { 
+        ctx.fillStyle = colors[b.type]; 
+        ctx.fillRect(cx+b.x*pSize+1, cy+b.y*pSize+1, pSize-2, pSize-2); 
+        if(b.type==='bomb'){ ctx.fillStyle="white"; ctx.beginPath(); ctx.arc(cx+b.x*pSize+pSize/2, cy+b.y*pSize+pSize/2, pSize/4, 0, 7); ctx.fill(); }
+    });
+}
+
+function train(type) {
+    if (turns <= 0) return;
+    switch(type) {
+        case 'A': if(hp<10)return; stats.a+=rnd(1.5, 2.0); stats.e+=0.1; hp-=10; break;
+        case 'B': if(hp<10)return; stats.b+=rnd(1.5, 2.0); stats.e+=0.1; hp-=10; break;
+        case 'C': if(hp<10)return; stats.c+=rnd(1.5, 2.0); stats.e+=0.1; hp-=10; break;
+        case 'E': if(hp<10)return; stats.a+=1; stats.c+=1; stats.e+=0.2; stats.b/=2; hp-=10; break;
+        case 'I': if(hp<20)return; stats.c+=1.5; stats.d+=rnd(0.5, 0.7); stats.e+=rnd(0.1, 0.3); hp-=20; break;
+        case 'D': if(hp<20)return; stats.a+=1; stats.d+=rnd(0.6, 0.8); stats.e+=rnd(0.1, 0.3); hp-=20; break;
+        case 'F': if(hp<30)return; stats.d+=1; stats.e+=1; hp-=30; break;
+        case 'G': if(hp<15)return; stats.g*=0.9; stats.e-=0.6; hp-=15; break;
+        case 'H': if(hp<40)return; stats.a+=5; stats.e+=1.2; stats.b/=2; stats.c/=2; stats.d/=2; hp-=40; break;
+        case 'REST': hp = Math.min(maxHp, hp+60); break;
+    }
+    turns--; updateUI();
+}
+
+function updateUI() {
+    document.getElementById('hp').innerText = Math.floor(hp);
+    document.getElementById('turns').innerText = turns;
+    ['a','b','c','d','e','g'].forEach(s => {
+        let val = Math.max(0, stats[s]);
+        document.getElementById('val-'+s).innerText = val.toFixed(s==='g'?2:1);
+        let max = s==='a'?40:s==='c'?30:Math.max(stats.a, 15);
+        document.getElementById('bar-'+s).style.width = Math.min(100, (val/max)*100) + "%";
+    });
+    updatePreview();
+}
+
+function finishBreeding() {
+    document.querySelectorAll('.train-col button').forEach(b => b.disabled = true);
+    document.getElementById('start-btn').style.display = 'none';
+    spawnPiece(); requestAnimationFrame(gameLoop);
+}
+
+function spawnPiece() {
+    if (minoRemaining <= 0) { 
+        isGameOver = true; 
+        if(score > highScore) localStorage.setItem('mino_breeder_highscore', score);
+        alert("Game Over! Score: " + score); location.reload(); return; 
+    }
+    minoCount++;
+    document.getElementById('mino-count-display').innerText = "NEXT: " + minoCount + " / 10";
+    currentPiece = { x: Math.floor(COLS/2), y: 2, blocks: generateBlockData() };
+    minoRemaining--;
+}
+
+function gameLoop(time = 0) {
+    if (isGameOver) return;
+    if (time - lastTime > (600 / Math.max(0.1, stats.g))) { move(0, 1); lastTime = time; }
+    draw(); requestAnimationFrame(gameLoop);
+}
+
+function draw() {
+    const ctx = document.getElementById('stage').getContext('2d');
+    ctx.clearRect(0, 0, 300, 900);
+    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    for(let i=0; i<COLS; i++) ctx.strokeRect(i*SIZE, 0, SIZE, 900);
+    grid.forEach((row, y) => row.forEach((b, x) => { if(b) drawSq(ctx, x, y, b.type); }));
+    if (currentPiece) currentPiece.blocks.forEach(b => drawSq(ctx, currentPiece.x + b.x, currentPiece.y + b.y, b.type));
+}
+
+function drawSq(ctx, x, y, type) {
+    ctx.fillStyle = colors[type];
+    ctx.fillRect(x * SIZE + 1, y * SIZE + 1, SIZE - 2, SIZE - 2);
+    if(type==='bomb'){ ctx.fillStyle="white"; ctx.beginPath(); ctx.arc(x*SIZE+SIZE/2, y*SIZE+SIZE/2, SIZE/4, 0, 7); ctx.fill(); }
+}
+
+function move(dx, dy) {
+    if(!currentPiece) return;
+    currentPiece.x += dx; currentPiece.y += dy;
+    if (checkCollision()) {
+        currentPiece.x -= dx; currentPiece.y -= dy;
+        if (dy > 0) lockPiece();
+        return false;
+    }
+    return true;
+}
+
+function rotate() {
+    const rotated = currentPiece.blocks.map(b => ({ x: -b.y, y: b.x, type: b.type }));
+    const old = currentPiece.blocks;
+    currentPiece.blocks = rotated;
+    if (checkCollision()) currentPiece.blocks = old;
+}
+
+function checkCollision() {
+    return currentPiece.blocks.some(b => {
+        let nx = currentPiece.x + b.x, ny = currentPiece.y + b.y;
+        return nx < 0 || nx >= COLS || ny >= ROWS || (ny >= 0 && grid[ny][nx]);
+    });
+}
+
+function lockPiece() {
+    let bombPos = [];
+    currentPiece.blocks.forEach(b => {
+        let nx = currentPiece.x + b.x, ny = currentPiece.y + b.y;
+        if (ny >= 0) { grid[ny][nx] = { type: b.type }; if (b.type === "bomb") bombPos.push({x: nx, y: ny}); }
+    });
+    bombPos.forEach(p => {
+        for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
+            let tx = p.x + dx, ty = p.y + dy;
+            if(tx>=0 && tx<COLS && ty>=0 && ty<ROWS) grid[ty][tx] = null;
+        }
+    });
+    applyGravity(); calculateScore(); spawnPiece();
+}
+
+function applyGravity() {
+    let moved = true;
+    while(moved) {
+        moved = false;
+        for (let y = ROWS - 2; y >= 0; y--) for (let x = 0; x < COLS; x++) {
+            if (grid[y][x] && grid[y][x].type !== "hard" && !grid[y+1][x]) {
+                grid[y+1][x] = grid[y][x]; grid[y][x] = null; moved = true;
+            }
+        }
+    }
+}
+
+function calculateScore() {
+    let total = 0, lines = 0;
+    grid.forEach((row, y) => {
+        let rowCount = row.filter(b => b).length;
+        if (rowCount === COLS) lines++;
+        let mult = 1;
+        row.forEach(b => { if(b && b.type === "gold") mult *= 2; });
+        total += rowCount * (ROWS - y) * mult;
+    });
+    score = total + (lines * 300);
+    document.getElementById('score-display').innerText = score;
+}
+
+window.addEventListener('keydown', e => {
+    if (!currentPiece || isGameOver) return;
+    if (e.key === 'ArrowLeft') move(-1, 0);
+    if (e.key === 'ArrowRight') move(1, 0);
+    if (e.key === 'ArrowDown') move(0, 1);
+    if (e.code === 'Space' || e.key === 'ArrowUp') { rotate(); e.preventDefault(); }
+});
+
+updateUI();
+</script>
+</body>
+</html>
