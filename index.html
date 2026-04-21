@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ミノ・ブリーダー v25</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ミノ・ブリーダー v27 - Rapid Drop</title>
     <style>
         :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; }
         
@@ -13,19 +13,19 @@
             background-size: cover;
             background-attachment: fixed;
             background-position: center;
-            color: white; font-family: sans-serif; margin: 0; padding: 10px; touch-action: manipulation; 
+            color: white; font-family: sans-serif; margin: 0; padding: 10px; 
+            /* スマホでの誤操作防止 */
+            touch-action: none; 
+            user-select: none;
+            -webkit-user-select: none;
         }
         
         #game-screen { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; justify-content: center; align-items: flex-start; }
         .left-area { flex: 1; max-width: 600px; display: flex; flex-direction: column; gap: 15px; }
         
-        /* 遊び方：2x2レイアウト */
         .manual { background: rgba(51, 51, 51, 0.85); padding: 15px; border-radius: 8px; font-size: 13px; line-height: 1.4; border: 1px solid #555; box-sizing: border-box; backdrop-filter: blur(5px); }
         .manual b { color: var(--main-gold); display: block; margin-bottom: 8px; }
-        .manual ul { 
-            margin: 0; padding: 0; list-style: none; 
-            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-        }
+        .manual ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .manual li { display: flex; align-items: center; }
         .manual li.full-row { grid-column: span 2; margin-top: 4px; border-top: 1px solid #555; padding-top: 8px; }
 
@@ -57,7 +57,7 @@
         button:hover { background: #555; }
         .cost-tag { float: right; color: #ff8888; font-size: 10px; }
 
-        .start-btn { background: var(--main-gold); color: #000; width: 100%; text-align: center; font-size: 16px; height: 50px; margin-top: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 5px; }
+        .start-btn { background: var(--main-gold); color: #000; width: 100%; text-align: center; font-size: 16px; height: 50px; margin-top: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 5px; display: block; }
         .preview-area { background: #111; border: 1px solid #444; border-radius: 5px; padding: 8px; margin-top: 10px; text-align: center; }
         #preview-canvas { background: #000; }
 
@@ -67,12 +67,12 @@
         canvas#stage { border: 2px solid #555; background: rgba(0,0,0,0.9); width: 300px; height: 85vh; max-height: 800px; }
         
         #controls { display: none; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; width: 300px; margin-left: auto; margin-right: auto; }
-        .ctrl-btn { height: 60px; background: #333; border: 2px solid #555; color: white; font-size: 24px; display: flex; align-items: center; justify-content: center; border-radius: 10px; user-select: none; }
+        .ctrl-btn { height: 60px; background: rgba(51, 51, 51, 0.9); border: 2px solid #555; color: white; font-size: 28px; display: flex; align-items: center; justify-content: center; border-radius: 10px; user-select: none; backdrop-filter: blur(5px); -webkit-tap-highlight-color: transparent; }
+        .ctrl-btn:active { background: rgba(85, 85, 85, 0.9); }
 
         @media (max-width: 900px) {
             #game-screen { flex-direction: column; align-items: center; }
             .left-area, .right-area { width: 100%; max-width: 600px; }
-            .manual ul { grid-template-columns: 1fr 1fr; }
             #controls { display: grid; }
         }
     </style>
@@ -134,12 +134,15 @@
         <div id="score-display">0</div>
         <div id="mino-count-display">NEXT: 1 / 10</div>
         <canvas id="stage" width="300" height="900"></canvas>
+        
         <div id="controls">
-            <div class="ctrl-btn" onmousedown="move(-1,0)" ontouchstart="move(-1,0)">←</div>
-            <div class="ctrl-btn" onmousedown="move(0,1)" ontouchstart="move(0,1)">↓</div>
-            <div class="ctrl-btn" onmousedown="move(1,0)" ontouchstart="move(1,0)">→</div>
+            <div class="ctrl-btn" onmousedown="handleControlMove(-1,0)" ontouchstart="handleControlMove(-1,0)">←</div>
+            <div class="ctrl-btn" 
+                 onmousedown="startRapidDrop()" onmouseup="stopRapidDrop()" onmouseleave="stopRapidDrop()"
+                 ontouchstart="startRapidDrop()" ontouchend="stopRapidDrop()">↓</div>
+            <div class="ctrl-btn" onmousedown="handleControlMove(1,0)" ontouchstart="handleControlMove(1,0)">→</div>
             <div></div>
-            <div class="ctrl-btn" style="color:var(--main-cyan)" onmousedown="rotate()" ontouchstart="rotate()">↻</div>
+            <div class="ctrl-btn" style="color:var(--main-cyan)" onmousedown="handleControlRotate()" ontouchstart="handleControlRotate()">↻</div>
         </div>
     </div>
 </div>
@@ -150,12 +153,12 @@ let stats = { a: 4.0, b: 2.0, c: 4.0, d: 0.0, e: 0.0, g: 1.0 };
 let hp = 120, maxHp = 120, turns = 10, minoRemaining = 10, minoCount = 0;
 let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
 let currentPiece = null, score = 0, isGameOver = false, lastTime = 0;
+let dropIntervalId = null; // 長押し用
 let highScore = localStorage.getItem('mino_breeder_highscore') || 0;
 const colors = { hard: "#00ffcc", soft: "#ff4444", gold: "#ffd700", bomb: "#ff4500" };
 
 document.getElementById('high-score').innerText = highScore;
 
-// 乱数生成補助
 const rnd = (min, max) => Math.random() * (max - min) + min;
 
 function generateBlockData() {
@@ -235,6 +238,7 @@ function finishBreeding() {
 function spawnPiece() {
     if (minoRemaining <= 0) { 
         isGameOver = true; 
+        stopRapidDrop();
         if(score > highScore) localStorage.setItem('mino_breeder_highscore', score);
         alert("Game Over! Score: " + score); location.reload(); return; 
     }
@@ -266,17 +270,21 @@ function drawSq(ctx, x, y, type) {
 }
 
 function move(dx, dy) {
-    if(!currentPiece) return;
+    if(!currentPiece || isGameOver) return;
     currentPiece.x += dx; currentPiece.y += dy;
     if (checkCollision()) {
         currentPiece.x -= dx; currentPiece.y -= dy;
-        if (dy > 0) lockPiece();
+        if (dy > 0) {
+            lockPiece();
+            stopRapidDrop(); // ロックされたら加速を停止
+        }
         return false;
     }
     return true;
 }
 
 function rotate() {
+    if(!currentPiece || isGameOver) return;
     const rotated = currentPiece.blocks.map(b => ({ x: -b.y, y: b.x, type: b.type }));
     const old = currentPiece.blocks;
     currentPiece.blocks = rotated;
@@ -330,6 +338,7 @@ function calculateScore() {
     document.getElementById('score-display').innerText = score;
 }
 
+// PC用キーボード
 window.addEventListener('keydown', e => {
     if (!currentPiece || isGameOver) return;
     if (e.key === 'ArrowLeft') move(-1, 0);
@@ -337,6 +346,37 @@ window.addEventListener('keydown', e => {
     if (e.key === 'ArrowDown') move(0, 1);
     if (e.code === 'Space' || e.key === 'ArrowUp') { rotate(); e.preventDefault(); }
 });
+
+// スマホ・マウス用コントロール関数
+function handleControlMove(dx, dy) {
+    if (!currentPiece || isGameOver) return;
+    move(dx, dy);
+    draw();
+}
+
+function handleControlRotate() {
+    if (!currentPiece || isGameOver) return;
+    rotate();
+    draw();
+}
+
+// 下ボタン長押し（高速落下）の実装
+function startRapidDrop() {
+    if (dropIntervalId || !currentPiece || isGameOver) return;
+    move(0, 1); // 最初の1回
+    draw();
+    dropIntervalId = setInterval(() => {
+        move(0, 1);
+        draw();
+    }, 50); // 50msごとに落下
+}
+
+function stopRapidDrop() {
+    if (dropIntervalId) {
+        clearInterval(dropIntervalId);
+        dropIntervalId = null;
+    }
+}
 
 updateUI();
 </script>
