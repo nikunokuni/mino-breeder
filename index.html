@@ -135,13 +135,13 @@
         <canvas id="stage" width="300" height="900"></canvas>
         
         <div id="controls">
-            <div class="ctrl-btn" onmousedown="handleControlMove(-1,0)" ontouchstart="handleControlMove(-1,0)">←</div>
+            <div class="ctrl-btn" onmousedown="handleControlMove(-1,0)" ontouchstart="handleControlMove(-1,0,event)">←</div>
             <div class="ctrl-btn" 
                  onmousedown="startRapidDrop()" onmouseup="stopRapidDrop()" onmouseleave="stopRapidDrop()"
-                 ontouchstart="startRapidDrop()" ontouchend="stopRapidDrop()">↓</div>
-            <div class="ctrl-btn" onmousedown="handleControlMove(1,0)" ontouchstart="handleControlMove(1,0)">→</div>
+                 ontouchstart="startRapidDrop(event)" ontouchend="stopRapidDrop(event)">↓</div>
+            <div class="ctrl-btn" onmousedown="handleControlMove(1,0)" ontouchstart="handleControlMove(1,0,event)">→</div>
             <div></div>
-            <div class="ctrl-btn" style="color:var(--main-cyan)" onmousedown="handleControlRotate()" ontouchstart="handleControlRotate()">↻</div>
+            <div class="ctrl-btn" style="color:var(--main-cyan)" onmousedown="handleControlRotate(event)" ontouchstart="handleControlRotate(event)">↻</div>
         </div>
     </div>
 </div>
