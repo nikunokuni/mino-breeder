@@ -347,34 +347,32 @@ window.addEventListener('keydown', e => {
 });
 
 // スマホ・マウス用コントロール関数
-function handleControlMove(dx, dy) {
-    if (!currentPiece || isGameOver) return;
+function handleControlMove(dx, dy,e) {
+    if (e && e.type === 'touchstart') e.preventDefault();
     move(dx, dy);
     draw();
 }
 
-function handleControlRotate() {
-    if (!currentPiece || isGameOver) return;
-    rotate();
+function handleControlRotate(e) {
+    if (e && e.type === 'touchstart') e.preventDefault();
+    if(!currentPiece) return;
+    const old = currentPiece.blocks;
+    currentPiece.blocks = currentPiece.blocks.map(b => ({x: -b.y, y: b.x, type: b.type}));
+    if(checkCollision()) currentPiece.blocks = old;
     draw();
 }
 
 // 下ボタン長押し（高速落下）の実装
-function startRapidDrop() {
-    if (dropIntervalId || !currentPiece || isGameOver) return;
-    move(0, 1); // 最初の1回
-    draw();
-    dropIntervalId = setInterval(() => {
-        move(0, 1);
-        draw();
-    }, 50); // 50msごとに落下
+function startRapidDro(e) { 
+    if (e && e.type === 'touchstart') e.preventDefault();
+    if(dropIntervalId || isGameOver) return; 
+    move(0,1); draw();
+    dropIntervalId = setInterval(() => { move(0,1); draw(); }, 50); 
 }
 
-function stopRapidDrop() {
-    if (dropIntervalId) {
-        clearInterval(dropIntervalId);
-        dropIntervalId = null;
-    }
+function stopRapidDro(e) { 
+    if (e && e.type === 'touchend') e.preventDefault();
+    clearInterval(dropIntervalId); dropIntervalId = null; 
 }
 
 updateUI();
