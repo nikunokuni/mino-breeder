@@ -137,7 +137,7 @@
         <div id="controls">
             <div class="ctrl-btn" onmousedown="handleControlMove(-1,0)" ontouchstart="handleControlMove(-1,0,event)">←</div>
             <div class="ctrl-btn" 
-                 onmousedown="startRapidDrop()" onmouseup="stopRapidDrop()" onmouseleave="stopRapidDrop()"
+                 onmousedown="startRapidDrop(event)" onmouseup="stopRapidDrop(event)" onmouseleave="stopRapidDrop(event)"
                  ontouchstart="startRapidDrop(event)" ontouchend="stopRapidDrop(event)">↓</div>
             <div class="ctrl-btn" onmousedown="handleControlMove(1,0)" ontouchstart="handleControlMove(1,0,event)">→</div>
             <div></div>
