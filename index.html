@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ミノ・ブリーダー v32 </title>
+    <title>ミノ・ブリーダー v33 </title>
     <style>
         :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; }
         
@@ -363,14 +363,14 @@ function handleControlRotate(e) {
 }
 
 // 下ボタン長押し（高速落下）の実装
-function startRapidDro(e) { 
+function startRapidDrop(e) { 
     if (e && e.type === 'touchstart') e.preventDefault();
     if(dropIntervalId || isGameOver) return; 
     move(0,1); draw();
     dropIntervalId = setInterval(() => { move(0,1); draw(); }, 50); 
 }
 
-function stopRapidDro(e) { 
+function stopRapidDrop(e) { 
     if (e && e.type === 'touchend') e.preventDefault();
     clearInterval(dropIntervalId); dropIntervalId = null; 
 }
