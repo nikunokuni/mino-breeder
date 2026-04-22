@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ミノ・ブリーダー v31 </title>
+    <title>ミノ・ブリーダー v32 </title>
     <style>
         :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; }
         
@@ -135,11 +135,11 @@
         <canvas id="stage" width="300" height="900"></canvas>
         
         <div id="controls">
-            <div class="ctrl-btn" onmousedown="handleControlMove(-1,0)" ontouchstart="handleControlMove(-1,0,event)">←</div>
+            <div class="ctrl-btn" onmousedown="handleControlMove(-1,0,event)" ontouchstart="handleControlMove(-1,0,event)">←</div>
             <div class="ctrl-btn" 
                  onmousedown="startRapidDrop(event)" onmouseup="stopRapidDrop(event)" onmouseleave="stopRapidDrop(event)"
                  ontouchstart="startRapidDrop(event)" ontouchend="stopRapidDrop(event)">↓</div>
-            <div class="ctrl-btn" onmousedown="handleControlMove(1,0)" ontouchstart="handleControlMove(1,0,event)">→</div>
+            <div class="ctrl-btn" onmousedown="handleControlMove(1,0,event)" ontouchstart="handleControlMove(1,0,event)">→</div>
             <div></div>
             <div class="ctrl-btn" style="color:var(--main-cyan)" onmousedown="handleControlRotate(event)" ontouchstart="handleControlRotate(event)">↻</div>
         </div>
