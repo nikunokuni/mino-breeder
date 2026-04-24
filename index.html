@@ -261,7 +261,7 @@ function draw() {
     // --- 4列ごと、10行ごとのガイド塗り ---
     for (let y = 0; y < ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
-            let isVerticalGuide = (x % 4 === 0);   // 4列ごとに縦ライン
+            let isVerticalGuide = (x % 2 === 0);   // 2列ごとに縦ライン
             let isHorizontalGuide = (y % 10 === 0); // 10行ごとに横ライン
 
             if (isVerticalGuide || isHorizontalGuide) {
