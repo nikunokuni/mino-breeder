@@ -254,12 +254,41 @@ function gameLoop(time = 0) {
 }
 
 function draw() {
-    const ctx = document.getElementById('stage').getContext('2d');
-    ctx.clearRect(0, 0, 300, 900);
-    ctx.strokeStyle = "rgba(255,255,255,0.05)";
-    for(let i=0; i<COLS; i++) ctx.strokeRect(i*SIZE, 0, SIZE, 900);
-    grid.forEach((row, y) => row.forEach((b, x) => { if(b) drawSq(ctx, x, y, b.type); }));
-    if (currentPiece) currentPiece.blocks.forEach(b => drawSq(ctx, currentPiece.x + b.x, currentPiece.y + b.y, b.type));
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // --- グリッド線（ガイド線）の描画 ---
+    ctx.beginPath();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)"; // 白の透明度10%（薄い線）
+    ctx.lineWidth = 1;
+
+    // 縦線
+    for (let x = 0; x <= COLS; x++) {
+        ctx.moveTo(x * SIZE, 0);
+        ctx.lineTo(x * SIZE, ROWS * SIZE);
+    }
+    // 横線
+    for (let y = 0; y <= ROWS; y++) {
+        ctx.moveTo(0, y * SIZE);
+        ctx.lineTo(COLS * SIZE, y * SIZE);
+    }
+    ctx.stroke();
+    // --------------------------------
+
+    // 積み上がったブロックの描画
+    grid.forEach((row, y) => {
+        row.forEach((cell, x) => {
+            if (cell) drawSq(ctx, x, y, cell.type);
+        });
+    });
+
+    // 動かしているミノの描画
+    if (currentPiece) {
+        currentPiece.blocks.forEach(b => {
+            drawSq(ctx, currentPiece.x + b.x, currentPiece.y + b.y, b.type);
+        });
+    }
 }
 
 function drawSq(ctx, x, y, type) {
