@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ミノ・ブリーダー v34 </title>
+    <title>ミノ・ブリーダー v35 </title>
     <style>
         :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; }
         
@@ -258,23 +258,22 @@ function draw() {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // --- グリッド線（ガイド線）の描画 ---
-    ctx.beginPath();
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)"; // 白の透明度10%（薄い線）
-    ctx.lineWidth = 1;
+    // --- 4列ごと、10行ごとのガイド塗り ---
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+            let isVerticalGuide = (x % 4 === 0);   // 4列ごとに縦ライン
+            let isHorizontalGuide = (y % 10 === 0); // 10行ごとに横ライン
 
-    // 縦線
-    for (let x = 0; x <= COLS; x++) {
-        ctx.moveTo(x * SIZE, 0);
-        ctx.lineTo(x * SIZE, ROWS * SIZE);
+            if (isVerticalGuide || isHorizontalGuide) {
+                // ガイドラインの色を設定（縦横が重なる場所は少し濃くなる）
+                ctx.fillStyle = isHorizontalGuide 
+                    ? "rgba(255, 255, 255, 0.15)" // 横ライン（高さの節目）を少し強調
+                    : "rgba(255, 255, 255, 0.07)"; // 縦ラインは控えめに
+                
+                ctx.fillRect(x * SIZE, y * SIZE, SIZE, SIZE);
+            }
+        }
     }
-    // 横線
-    for (let y = 0; y <= ROWS; y++) {
-        ctx.moveTo(0, y * SIZE);
-        ctx.lineTo(COLS * SIZE, y * SIZE);
-    }
-    ctx.stroke();
-    // --------------------------------
 
     // 積み上がったブロックの描画
     grid.forEach((row, y) => {
