@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ミノ・ブリーダー v35 </title>
+    <title>ミノ・ブリーダー v36 </title>
     <style>
         :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; }
         
@@ -262,12 +262,12 @@ function draw() {
     for (let y = 0; y < ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
             let isVerticalGuide = (x % 2 === 0);   // 2列ごとに縦ライン
-            let isHorizontalGuide = (y % 10 === 0); // 10行ごとに横ライン
+           // let isHorizontalGuide = (y % 10 === 0); // 10行ごとに横ライン
 
             if (isVerticalGuide || isHorizontalGuide) {
                 // ガイドラインの色を設定（縦横が重なる場所は少し濃くなる）
                 ctx.fillStyle = isHorizontalGuide 
-                    ? "rgba(200, 255, 200, 0.15)" // 横ライン（高さの節目）を少し強調
+                    ? "rgba(100, 255, 100, 0.15)" // 横ライン（高さの節目）を少し強調
                     : "rgba(255, 255, 255, 0.07)"; // 縦ラインは控えめに
                 
                 ctx.fillRect(x * SIZE, y * SIZE, SIZE, SIZE);
