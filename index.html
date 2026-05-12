@@ -51,8 +51,20 @@
         #score-display { margin: 0; color: var(--main-gold); font-size: 32px; font-weight: bold; }
         #mino-count-display { color: #aaa; font-size: 14px; margin-bottom: 10px; font-weight: bold; }
         canvas#stage { border: 2px solid #555; background: rgba(0,0,0,0.9); width: 300px; height: 85vh; max-height: 800px; }
-        #controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; width: 300px; margin-left: auto; margin-right: auto; touch-action: none;}
-        .ctrl-btn { height: 60px; background: rgba(51, 51, 51, 0.9); border: 2px solid #555; color: white; font-size: 28px; display: flex; align-items: center; justify-content: center; border-radius: 10px; user-select: none; backdrop-filter: blur(5px); -webkit-tap-highlight-color: transparent; }
+        #controls { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); /* 3列 */
+    gap: 12px; 
+    margin: 20px auto; 
+    width: 280px; 
+    touch-action: none; 
+}
+
+/* 下ボタンだけ2段目の真ん中に配置し、横に広げる設定 */
+.down-btn {
+    grid-column: 2; /* 2列目に配置 */
+    background: rgba(80, 80, 80, 0.95); /* 少し色を変えて目立たせる */
+}
         #ranking-area { background: rgba(0,0,0,0.8); margin-top: 15px; padding: 15px; border-radius: 8px; font-size: 13px; border: 1px solid var(--main-gold); display: none; text-align: left; }
         @media (max-width: 900px) { #game-screen { flex-direction: column; align-items: center; } .left-area, .right-area { width: 100%; max-width: 600px; } }
     </style>
@@ -111,12 +123,13 @@
         <div id="mino-count-display">NEXT: 1 / 10</div>
         <canvas id="stage" width="300" height="900"></canvas>
         <div id="controls">
-            <div class="ctrl-btn" onmousedown="handleControlMove(-1,0,event)" ontouchstart="handleControlMove(-1,0,event)">←</div>
-            <div class="ctrl-btn" onmousedown="startRapidDrop(event)" onmouseup="stopRapidDrop(event)" ontouchstart="startRapidDrop(event)" ontouchend="stopRapidDrop(event)">↓</div>
-            <div class="ctrl-btn" onmousedown="handleControlMove(1,0,event)" ontouchstart="handleControlMove(1,0,event)">→</div>
-            <div></div>
-            <div class="ctrl-btn" style="color:var(--main-cyan)" onmousedown="handleControlRotate(event)" ontouchstart="handleControlRotate(event)">↻</div>
-        </div>
+   　　　　 <div class="ctrl-btn" onmousedown="handleMove(-1,0)" ontouchstart="handleMove(-1,0,event)">←</div>
+  　　　　  <div class="ctrl-btn" style="color:var(--main-cyan)" onmousedown="handleRotate()" ontouchstart="handleRotate(event)">↻</div>
+  　　　　  <div class="ctrl-btn" onmousedown="handleMove(1,0)" ontouchstart="handleMove(1,0,event)">→</div>
+    　　　　<div class="ctrl-btn down-btn" 
+         　　　onmousedown="startRapidDrop()" onmouseup="stopRapidDrop()" onmouseleave="stopRapidDrop()"
+         　　　ontouchstart="startRapidDrop(event)" ontouchend="stopRapidDrop(event)">↓</div>
+　　　　 </div>
         <div id="ranking-area">
             <h4 style="margin: 0 0 10px 0; color: var(--main-gold); text-align: center;">本日のランキング TOP5</h4>
             <div id="ranking-list"></div>
