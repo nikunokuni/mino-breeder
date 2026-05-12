@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ミノ・ブリーダー - Final Build</title>
+    <title>ミノ・ブリーダー 45</title>
     <style>
         :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; }
         body { 
@@ -19,7 +19,6 @@
         #game-screen { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; justify-content: center; align-items: flex-start; }
         .left-area { flex: 1; max-width: 600px; display: flex; flex-direction: column; gap: 15px; }
         
-        /* 説明文のレイアウト修正 */
         .manual { background: rgba(0, 0, 0, 0.75); padding: 15px; border-radius: 8px; font-size: 13px; line-height: 1.4; border: 1px solid #555; box-sizing: border-box; backdrop-filter: blur(5px); }
         .manual b { color: var(--main-gold); display: block; margin-bottom: 8px; }
         .manual ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -32,7 +31,7 @@
             display: block; 
             text-align: center; 
             width: 100%;
-            white-space: nowrap; /* PCで一列に収める */
+            white-space: nowrap;
         }
         
         .icon { width: 14px; height: 14px; display: inline-block; margin-right: 6px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
@@ -63,16 +62,37 @@
         .start-btn { background: var(--main-gold); color: #000; width: 100%; text-align: center; font-size: 16px; height: 50px; margin-top: 15px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; }
         .preview-area { background: #111; border: 1px solid #444; border-radius: 5px; padding: 8px; margin-top: 10px; text-align: center; }
         #preview-canvas { background: #000; }
-
+ 
+        /* HP不足メッセージ */
+        #hp-warning {
+            display: none;
+            background: rgba(180, 0, 0, 0.85);
+            color: #fff;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ff4444;
+            margin-top: 6px;
+            animation: fadeInOut 2s forwards;
+        }
+        @keyframes fadeInOut {
+            0%   { opacity: 0; }
+            10%  { opacity: 1; }
+            70%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
+ 
         .right-area { flex: 0 0 320px; text-align: center; }
         #mino-count-display { color: #fff; background: rgba(0,0,0,0.6); padding: 5px; border-radius: 4px; font-size: 14px; margin-bottom: 10px; font-weight: bold; }
         canvas#stage { border: 2px solid #555; background: rgba(0,0,0,0.85); width: 300px; height: 85vh; max-height: 800px; }
-
+ 
         #controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px auto; width: 280px; touch-action: none; }
         .ctrl-btn { height: 60px; background: rgba(51, 51, 51, 0.9); border: 2px solid #555; color: white; font-size: 28px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
         .ctrl-btn:active { background: #666; }
         .down-btn { grid-column: 2; background: rgba(80, 80, 80, 0.95); }
-
+ 
         #ranking-area { background: rgba(0,0,0,0.9); margin-top: 15px; padding: 15px; border-radius: 8px; font-size: 13px; border: 2px solid var(--main-gold); display: none; text-align: left; }
         #game-msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.8); color: var(--main-gold); padding: 20px; border-radius: 10px; font-size: 24px; font-weight: bold; display: none; border: 2px solid white; z-index: 100; pointer-events: none; }
         
@@ -80,9 +100,9 @@
     </style>
 </head>
 <body>
-
+ 
 <div id="game-msg">パズル完了</div>
-
+ 
 <div id="game-screen">
     <div class="left-area">
         <div class="manual">
@@ -125,6 +145,8 @@
                         <button onclick="train('H')">超破壊的進展 (数+5, 他半減) <span class="cost-tag">HP-40</span></button>
                         <button onclick="train('REST')" style="background:#2e7d32; margin-top:5px;">休憩 (HP+60) <span class="cost-tag" style="color:white">回数-1</span></button>
                     </div>
+                    <!-- ★修正1: HP不足メッセージ表示エリア -->
+                    <div id="hp-warning">HPが足りません！</div>
                 </div>
             </div>
             <button id="start-btn" class="start-btn" onclick="finishBreeding()">育成完了：パズル開始</button>
@@ -148,10 +170,10 @@
         </div>
     </div>
 </div>
-
+ 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyDkQuswbQDk6-cCgKDhUzZ6eL4WqHQ4lfnhOjc_A_pQ29tGzBBHvIUXx5u2VylU3HCWg/exec";
-
+ 
 const COLS = 20, ROWS = 60, SIZE = 15;
 let stats = { a: 4.0, b: 2.0, c: 4.0, d: 0.0, e: 0.0, g: 1.0 };
 let hp = 120, turns = 10, minoRemaining = 10, minoCount = 0;
@@ -159,9 +181,9 @@ let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
 let currentPiece = null, score = 0, isGameOver = false, lastTime = 0, dropIntervalId = null, scoreIntervalId = null;
 let highScore = localStorage.getItem('mino_breeder_highscore') || 0;
 const colors = { hard: "#00ffcc", soft: "#ff4444", gold: "#ffd700", bomb: "#333333" };
-
+ 
 document.getElementById('high-score').innerText = highScore;
-
+ 
 // キーボード操作
 window.addEventListener('keydown', e => {
     if(!currentPiece || isGameOver) return;
@@ -177,14 +199,20 @@ window.addEventListener('keydown', e => {
     }
 });
 window.addEventListener('keyup', e => { if(e.key === 'ArrowDown') stopRapidDrop(); });
-
+ 
 const rnd = (min, max) => Math.random() * (max - min) + min;
-
+ 
+// ★修正: 15以上のときだけ緩やかな減衰（全ステータス共通）
 function addStat(key, amount) {
-    if (key === 'a') { stats.a += amount / (1 + stats.a * 0.15); } 
-    else { stats[key] += amount; }
+    const val = stats[key];
+    if (val >= 15) {
+        const excess = val - 15;
+        stats[key] += amount / (1 + excess * 0.08);
+    } else {
+        stats[key] += amount;
+    }
 }
-
+ 
 function updateUI() {
     document.getElementById('hp').innerText = Math.floor(hp);
     document.getElementById('turns').innerText = turns;
@@ -197,10 +225,29 @@ function updateUI() {
     });
     updatePreview();
 }
-
+ 
+// ★修正1: HP不足メッセージ表示（アニメーション付き）
+let hpWarnTimer = null;
+function showHpWarning() {
+    const el = document.getElementById('hp-warning');
+    el.style.display = 'block';
+    el.style.animation = 'none';
+    void el.offsetWidth; // reflow で animation をリセット
+    el.style.animation = 'fadeInOut 2s forwards';
+    if(hpWarnTimer) clearTimeout(hpWarnTimer);
+    hpWarnTimer = setTimeout(() => { el.style.display = 'none'; }, 2000);
+}
+ 
+// 整数部分は確定、小数部分はその確率で+1する
+function probCount(val) {
+    const base = Math.floor(val);
+    const frac = val - base;
+    return base + (Math.random() < frac ? 1 : 0);
+}
+ 
 function generateBlockData() {
     let blocks = [];
-    const countA = Math.max(1, Math.floor(stats.a));
+    const countA = Math.max(1, probCount(stats.a));
     for(let i=0; i < countA; i++) {
         if(i === 0) blocks.push({x: 0, y: 0, type: "soft"});
         else {
@@ -214,12 +261,15 @@ function generateBlockData() {
     }
     let indices = blocks.map((_, i) => i).sort(()=>Math.random()-0.5);
     let cur = 0;
-    for(let i=0; i < Math.floor(stats.e) && cur < indices.length; i++) blocks[indices[cur++]].type = "bomb";
-    for(let i=0; i < Math.floor(stats.d) && cur < indices.length; i++) blocks[indices[cur++]].type = "gold";
-    for(let i=0; i < Math.floor(stats.b) && cur < indices.length; i++) blocks[indices[cur++]].type = "hard";
+    const numBomb = probCount(stats.e);
+    const numGold = probCount(stats.d);
+    const numHard = probCount(stats.b);
+    for(let i=0; i < numBomb && cur < indices.length; i++) blocks[indices[cur++]].type = "bomb";
+    for(let i=0; i < numGold && cur < indices.length; i++) blocks[indices[cur++]].type = "gold";
+    for(let i=0; i < numHard && cur < indices.length; i++) blocks[indices[cur++]].type = "hard";
     return blocks;
 }
-
+ 
 function updatePreview() {
     const canvas = document.getElementById('preview-canvas');
     const ctx = canvas.getContext('2d');
@@ -233,30 +283,42 @@ function updatePreview() {
     const cy = canvas.height/2 - ((maxY+minY+1)*pSize)/2;
     blocks.forEach(b => { drawSq(ctx, 0, 0, b.type, cx+b.x*pSize, cy+b.y*pSize, pSize); });
 }
-
+ 
+// ★修正1: HPチェックを各caseの外に出し、不足時はターンを消費せずに警告表示
 function train(type) {
     if (turns <= 0) return;
+ 
+    // 必要HPの定義
+    const costs = { A:10, B:10, C:10, E:10, I:20, D:20, F:30, G:15, H:40, REST:0 };
+    const cost = costs[type] ?? 0;
+ 
+    if (hp < cost) {
+        showHpWarning();
+        return; // ターン消費なし
+    }
+ 
     switch(type) {
-        case 'A': if(hp>=10){ addStat('a', rnd(1.5, 2.5)); stats.e+=0.1; hp-=10; } break;
-        case 'B': if(hp>=10){ addStat('b', rnd(1.5, 2.5)); stats.e+=0.1; hp-=10; } break;
-        case 'C': if(hp>=10){ addStat('c', rnd(1.5, 2.5)); stats.e+=0.1; hp-=10; } break;
-        case 'E': if(hp>=10){ addStat('a', 1); addStat('c', 1.5); stats.e+=0.2; stats.b/=2; hp-=10; } break;
-        case 'I': if(hp>=20){ addStat('c', 1.5); addStat('d', rnd(0.5, 1)); stats.e+=0.2; hp-=20; } break;
-        case 'D': if(hp>=20){ addStat('a', 1); addStat('d', rnd(0.8, 1.2)); stats.e+=0.2; hp-=20; } break;
-        case 'F': if(hp>=30){ addStat('d', 1.5); addStat('e', 1.5); hp-=30; } break;
-        case 'G': if(hp>=15){ stats.g += 0.5; stats.e-=0.6; hp-=15; } break;
-        case 'H': if(hp>=40){ addStat('a', 5); stats.e+=1.5; stats.b/=2; stats.c/=2; stats.d/=2; hp-=40; } break;
+        case 'A': addStat('a', rnd(1.5, 2.5)); stats.e+=0.1; hp-=10; break;
+        case 'B': addStat('b', rnd(1.5, 2.5)); stats.e+=0.1; hp-=10; break;
+        case 'C': addStat('c', rnd(1.5, 2.5)); stats.e+=0.1; hp-=10; break;
+        case 'E': addStat('a', 1); addStat('c', 1.5); stats.e+=0.2; stats.b/=2; hp-=10; break;
+        case 'I': addStat('c', 1.5); addStat('d', rnd(0.5, 1)); stats.e+=0.2; hp-=20; break;
+        case 'D': addStat('a', 1); addStat('d', rnd(0.8, 1.2)); stats.e+=0.2; hp-=20; break;
+        case 'F': addStat('d', 1.5); addStat('e', 1.5); hp-=30; break;
+        case 'G': stats.g += 0.5; stats.e-=0.6; hp-=15; break;
+        case 'H': addStat('a', 5); stats.e+=1.5; stats.b/=2; stats.c/=2; stats.d/=2; hp-=40; break;
         case 'REST': hp = Math.min(120, hp+60); break;
     }
-    turns--; updateUI();
+    turns--;
+    updateUI();
 }
-
+ 
 function finishBreeding() {
     document.querySelectorAll('.train-col button').forEach(b => b.disabled = true);
     document.getElementById('start-btn').style.display = 'none';
     spawnPiece(); requestAnimationFrame(gameLoop);
 }
-
+ 
 function spawnPiece() {
     if (minoRemaining <= 0) { endGame(); return; }
     minoCount++;
@@ -265,7 +327,7 @@ function spawnPiece() {
     if (checkCollision()) { endGame(); }
     minoRemaining--;
 }
-
+ 
 function endGame() {
     if(isGameOver) return;
     isGameOver = true;
@@ -281,7 +343,8 @@ function endGame() {
         else location.reload();
     }, 1000);
 }
-
+ 
+// ★修正3: ランキングでスコアがNaNのエントリを除外
 async function submitScore(name, score) {
     const area = document.getElementById('ranking-area');
     const list = document.getElementById('ranking-list');
@@ -290,20 +353,20 @@ async function submitScore(name, score) {
     try {
         const response = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ name: name.substring(0, 10), score: score }) });
         const data = await response.json();
-        // ランキング表示の修正: ${}がそのまま出ないように修正
-        list.innerHTML = data.map((e, i) => {
-            return "<div>" + (i+1) + "位: " + e.name + " - " + Math.floor(e.score) + "点</div>";
+        const validEntries = data.filter(e => e.name && !isNaN(Number(e.score)) && e.score !== "" && e.score !== null);
+        list.innerHTML = validEntries.map((e, i) => {
+            return "<div>" + (i+1) + "位: " + e.name + " - " + Math.floor(Number(e.score)) + "点</div>";
         }).join('');
     } catch (e) { list.innerText = "通信エラー"; }
 }
-
+ 
 function gameLoop(time = 0) {
     if (isGameOver) return;
     let gravitySpeed = 400 * stats.g; 
     if (time - lastTime > gravitySpeed) { move(0, 1); lastTime = time; }
     draw(); requestAnimationFrame(gameLoop);
 }
-
+ 
 function draw() {
     const canvas = document.getElementById('stage');
     const ctx = canvas.getContext('2d');
@@ -311,25 +374,24 @@ function draw() {
     
     ctx.strokeStyle = "rgba(255,255,255,0.05)";
     for(let x=0; x<COLS; x++) ctx.strokeRect(x*SIZE, 0, SIZE, canvas.height);
-
-    // キャンバスの中央（真ん中）にスコア表示
+ 
     ctx.fillStyle = "rgba(255, 215, 0, 0.2)";
     ctx.font = "bold 60px sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(Math.floor(score), canvas.width/2, canvas.height/2);
-
+ 
     grid.forEach((row, y) => row.forEach((cell, x) => { if (cell) drawSq(ctx, x, y, cell.type); }));
     if (currentPiece) currentPiece.blocks.forEach(b => drawSq(ctx, currentPiece.x + b.x, currentPiece.y + b.y, b.type));
 }
-
+ 
 function drawSq(ctx, x, y, type, px=null, py=null, ps=null) {
     const drawX = px !== null ? px : x * SIZE;
     const drawY = py !== null ? py : y * SIZE;
     const s = ps !== null ? ps : SIZE;
-
+ 
     ctx.fillStyle = colors[type];
     ctx.fillRect(drawX + 1, drawY + 1, s - 2, s - 2);
-
+ 
     if(type === 'bomb') {
         ctx.fillStyle = "black";
         ctx.beginPath();
@@ -351,7 +413,7 @@ function drawSq(ctx, x, y, type, px=null, py=null, ps=null) {
         ctx.fillRect(drawX + 3, drawY + 3, 2, 2);
     }
 }
-
+ 
 function move(dx, dy) {
     if(!currentPiece || isGameOver) return;
     currentPiece.x += dx; currentPiece.y += dy;
@@ -362,36 +424,47 @@ function move(dx, dy) {
     }
     return true;
 }
-
+ 
 function rotate() {
     if(!currentPiece || isGameOver) return;
     const old = currentPiece.blocks;
     currentPiece.blocks = currentPiece.blocks.map(b => ({ x: -b.y, y: b.x, type: b.type }));
     if (checkCollision()) currentPiece.blocks = old;
 }
-
+ 
 function checkCollision() {
     return currentPiece.blocks.some(b => {
         let nx = currentPiece.x + b.x, ny = currentPiece.y + b.y;
         return nx < 0 || nx >= COLS || ny >= ROWS || (ny >= 0 && grid[ny][nx]);
     });
 }
-
+ 
+// ★修正2: 爆弾の処理を改善
+// 全ブロックをgridに配置し終えてから、爆弾座標をまとめて爆発させる
 function lockPiece() {
     const p = currentPiece;
+    const bombPositions = []; // 爆弾の座標を先に記録
+ 
+    // まず全ブロックをgridに配置
     p.blocks.forEach(b => {
         let nx = p.x + b.x, ny = p.y + b.y;
         if (ny >= 0 && ny < ROWS && nx >= 0 && nx < COLS) {
             grid[ny][nx] = { type: b.type };
-            if (b.type === "bomb") { executeBomb(nx, ny); }
+            if (b.type === "bomb") {
+                bombPositions.push({ x: nx, y: ny });
+            }
         }
     });
+ 
+    // 全配置後にまとめて爆発（既存ブロックも含めて消去）
+    bombPositions.forEach(pos => executeBomb(pos.x, pos.y));
+ 
     applyGravity(); 
     calculateScore(); 
     spawnPiece();
     stopRapidDrop();
 }
-
+ 
 function executeBomb(nx, ny) {
     for(let dy=-1; dy<=1; dy++) {
         for(let dx=-1; dx<=1; dx++) {
@@ -400,7 +473,7 @@ function executeBomb(nx, ny) {
         }
     }
 }
-
+ 
 function applyGravity() {
     let moved = true;
     while(moved) {
@@ -416,7 +489,7 @@ function applyGravity() {
         }
     }
 }
-
+ 
 function calculateScore() {
     let bonus = 0;
     let blockScore = 0;
@@ -432,17 +505,17 @@ function calculateScore() {
     });
     score += bonus + blockScore;
 }
-
+ 
 function handleMove(dx, dy, e) { if(e) e.preventDefault(); move(dx, dy); draw(); }
 function handleRotate(e) { if(e) e.preventDefault(); rotate(); draw(); }
-
+ 
 function startRapidDrop(e) { 
     if(e) e.preventDefault(); 
     if(dropIntervalId) return; 
     scoreIntervalId = setInterval(() => { score += 10; }, 100);
     dropIntervalId = setInterval(() => { move(0,1); draw(); }, 50); 
 }
-
+ 
 function stopRapidDrop(e) { 
     if(e) e.preventDefault(); 
     clearInterval(dropIntervalId); 
@@ -450,7 +523,7 @@ function stopRapidDrop(e) {
     dropIntervalId = null; 
     scoreIntervalId = null;
 }
-
+ 
 updateUI();
 </script>
 </body>
