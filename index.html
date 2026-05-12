@@ -3,352 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ミノ・ブリーダー - Layout Optimized</title>
+    <title>ミノ・ブリーダー</title>
     <style>
         :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; --main-orange: #ff6600; }
         
         body { 
             background-color: #1a1a1a;
-            /* ↓↓↓ 【30行目付近】背景画像の設定場所 ↓↓↓ */
-            background-image: url('youtube-header.png'); 
+            /* ↓↓↓ 【24行目付近】背景画像の設定場所 ↓↓↓ */
+            background-image: url('your_image_file.jpg'); 
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
-            color: white; font-family: sans-serif; margin: 0; padding: 10px; 
-            user-select: none; -webkit-user-select: none;
-            overflow: hidden; /* PCでのスクロールを防止 */
+            color: white; font-family: sans-serif; margin: 0; padding: 0;
+            overflow: hidden; /* スクロール禁止 */
+            height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        #game-screen { 
-            display: flex; gap: 15px; max-width: 1300px; margin: 0 auto; 
-            justify-content: center; align-items: flex-start;
-            height: 98vh;
+        #game-container {
+            width: 100%; max-width: 500px; height: 100%;
+            display: flex; flex-direction: column; padding: 10px; box-sizing: border-box;
         }
 
-        /* 左：説明エリア */
-        .manual { 
-            flex: 0 0 220px; background: rgba(0, 0, 0, 0.7); padding: 12px; 
-            border-radius: 8px; font-size: 12px; border: 1px solid #555; 
+        /* 育成画面のレイアウト */
+        .status-panel { background: rgba(0,0,0,0.7); padding: 10px; border-radius: 10px; margin-bottom: 10px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; }
+        .stat-row { margin-bottom: 5px; }
+        .stat-bar { background: #333; height: 8px; border-radius: 4px; overflow: hidden; }
+        .stat-fill { height: 100%; background: var(--main-cyan); transition: width 0.3s; }
+
+        /* パズルエリア：スコアを背景に配置 */
+        #puzzle-area { 
+            position: relative; width: 300px; margin: 0 auto; flex-grow: 1; 
+            display: flex; flex-direction: column; align-items: center;
         }
-        .manual b { color: var(--main-gold); display: block; margin-bottom: 8px; font-size: 14px; }
-        .manual ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
-        .manual li { display: flex; align-items: center; white-space: nowrap; }
-        .bonus-text { margin-top: 10px; padding-top: 8px; border-top: 1px solid #555; font-size: 11px; line-height: 1.5; }
-        
-        /* アイコン修正 */
-        .icon { width: 14px; height: 14px; display: inline-block; margin-right: 8px; border-radius: 2px; flex-shrink: 0; }
-        .icon.soft { background: var(--main-red); }
-        .icon.hard { background: var(--main-cyan); }
-        .icon.gold { background: var(--main-gold); }
-        .icon.bomb { background: var(--main-orange); position: relative; }
+        #bg-score { 
+            position: absolute; top: 20%; width: 100%; text-align: center;
+            font-size: 80px; font-weight: bold; color: rgba(255, 215, 0, 0.15); /* 背景に薄く表示 */
+            z-index: 0; pointer-events: none; font-family: monospace;
+        }
+        canvas#stage { 
+            border: 2px solid #555; background: rgba(0,0,0,0.6); 
+            width: 100%; height: auto; max-height: 60vh; z-index: 1; position: relative;
+        }
+
+        /* 説明文のズレ修正 */
+        .manual { background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; font-size: 12px; margin-top: 10px; }
+        .manual table { width: 100%; border-collapse: collapse; }
+        .manual td { padding: 2px 5px; vertical-align: middle; }
+        .icon { width: 14px; height: 14px; display: inline-block; border-radius: 2px; position: relative; }
+        .icon.bomb { background: var(--main-orange); }
         .icon.bomb::after { content: ''; position: absolute; width: 4px; height: 4px; background: white; border-radius: 50%; top: 5px; left: 5px; }
 
-        /* 中央：育成エリア */
-        .left-area { flex: 1; max-width: 450px; display: flex; flex-direction: column; gap: 10px; height: 100%; }
-        .main-panel { background: rgba(50, 50, 50, 0.8); border-radius: 10px; padding: 12px; backdrop-filter: blur(5px); }
-        .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .info-box { background: rgba(0,0,0,0.5); padding: 8px; border-radius: 5px; font-size: 13px; border-left: 4px solid var(--main-gold); margin-bottom: 10px; }
-        
-        .stat-row { margin-bottom: 6px; font-size: 10px; }
-        .stat-bar { background: #222; height: 6px; width: 100%; margin-top: 2px; border-radius: 3px; overflow: hidden; }
-        .stat-fill { background: var(--main-cyan); height: 100%; width: 0%; transition: width 0.3s; }
-        
-        .btn-group { display: flex; flex-direction: column; gap: 4px; }
-        button { padding: 6px; cursor: pointer; border: none; border-radius: 4px; background: #444; color: white; font-size: 10px; font-weight: bold; }
-        .start-btn { background: var(--main-gold); color: #000; width: 100%; font-size: 16px; height: 45px; margin-top: 10px; }
+        /* 操作ボタン */
+        #controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; width: 100%; }
+        .ctrl-btn { height: 50px; background: rgba(255,255,255,0.1); border: 1px solid #777; color: white; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 20px; }
 
-        /* 右：パズルエリア */
-        .right-area { flex: 0 0 300px; display: flex; flex-direction: column; align-items: center; }
-        #score-display { color: var(--main-gold); font-size: 28px; font-weight: bold; margin: 0; }
-        canvas#stage { border: 2px solid #555; background: rgba(0,0,0,0.85); width: 280px; height: 75vh; }
-
-        /* 操作パネル */
-        #controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; width: 240px; }
-        .ctrl-btn { height: 45px; background: rgba(70, 70, 70, 0.9); border: 1px solid #777; color: white; font-size: 20px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
-
-        /* スマホ対応 */
-        @media (max-width: 900px) {
-            body { overflow-y: auto; }
-            #game-screen { flex-direction: column; height: auto; align-items: center; }
-            .manual, .left-area, .right-area { width: 100%; max-width: 350px; flex: none; }
-            .manual ul { grid-template-columns: 1fr 1fr; display: grid; }
-            canvas#stage { height: 500px; }
-        }
-
-        #game-msg { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.9); color: var(--main-gold); padding: 20px; border-radius: 10px; font-size: 32px; display: none; z-index: 100; border: 2px solid var(--main-gold); }
+        button.train-btn { padding: 8px; background: #444; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        #game-msg { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.95); color: var(--main-gold); padding: 30px; border-radius: 15px; text-align: center; display: none; z-index: 1000; border: 2px solid var(--main-gold); }
     </style>
 </head>
 <body>
 
-<div id="game-msg">パズル完了</div>
+<div id="game-msg"><h2>パズル終了</h2><p>スコア送信中...</p></div>
 
-<div id="game-screen">
-    <!-- 説明（PCでは左端） -->
-    <div class="manual">
-        <b>【遊び方】</b>
-        <ul>
-            <li><span class="icon soft"></span>下まで落ちる</li>
-            <li><span class="icon hard"></span>空中で固定</li>
-            <li><span class="icon gold"></span>得点2倍！</li>
-            <li><span class="icon bomb"></span>周りを爆発！</li>
-        </ul>
-        <div class="bonus-text">
-            横一列で<span style="color:var(--main-gold); font-weight:bold;">300点</span>。<br>
-            ↓キー（またはSキー）<br>押しっぱなしで加点！
+<div id="game-container">
+    <!-- 育成セクション -->
+    <div id="breeding-screen">
+        <div class="status-panel">
+            <div style="display:flex; justify-content: space-between; margin-bottom:10px;">
+                <span>HP: <b id="hp">120</b></span>
+                <span>残りターン: <b id="turns">10</b></span>
+            </div>
+            <div class="stat-grid">
+                <div class="stat-row">数: <span id="val-a">4.0</span> <div class="stat-bar"><div id="bar-a" class="stat-fill"></div></div></div>
+                <div class="stat-row">固さ: <span id="val-b">2.0</span> <div class="stat-bar"><div id="bar-b" class="stat-fill"></div></div></div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-top:10px;">
+                <button class="train-btn" onclick="train('A')">数UP (-10)</button>
+                <button class="train-btn" onclick="train('B')">固さUP (-10)</button>
+                <button class="train-btn" onclick="train('REST')" style="background:#2e7d32">休憩</button>
+            </div>
+            <button onclick="finishBreeding()" style="width:100%; margin-top:10px; height:40px; background:var(--main-gold); font-weight:bold; border-radius:5px;">育成完了・パズル開始</button>
         </div>
     </div>
 
-    <!-- 育成（中央） -->
-    <div class="left-area">
-        <div class="main-panel">
-            <div class="info-box">
-                HP: <span id="hp">120</span> | ターン: <span id="turns">10</span><br>
-                <span style="color:var(--main-gold)">BEST: <span id="high-score">0</span></span>
-            </div>
-            <div class="panel-grid">
-                <div class="status-col">
-                    <div class="stat-row">数: <span id="val-a">4.0</span> <div class="stat-bar"><div id="bar-a" class="stat-fill"></div></div></div>
-                    <div class="stat-row">固さ: <span id="val-b">2.0</span> <div class="stat-bar"><div id="bar-b" class="stat-fill"></div></div></div>
-                    <div class="stat-row">爆弾: <span id="val-e">0.0</span> <div class="stat-bar"><div id="bar-e" class="stat-fill" style="background:var(--main-orange)"></div></div></div>
-                    <div class="preview-area"><canvas id="preview-canvas" width="100" height="100"></canvas></div>
-                </div>
-                <div class="train-col">
-                    <div class="btn-group">
-                        <button onclick="train('A')">数UP <span style="color:#ff8888">-10</span></button>
-                        <button onclick="train('B')">固さUP <span style="color:#ff8888">-10</span></button>
-                        <button onclick="train('D')">得点UP <span style="color:#ff8888">-20</span></button>
-                        <button onclick="train('G')">猶予UP <span style="color:#ff8888">-15</span></button>
-                        <button onclick="train('REST')" style="background:#2e7d32">休憩 <span style="color:white">回数-1</span></button>
-                    </div>
-                </div>
-            </div>
-            <button id="start-btn" class="start-btn" onclick="finishBreeding()">育成完了：パズル開始</button>
-        </div>
-    </div>
-
-    <!-- パズル（右） -->
-    <div class="right-area">
-        <div id="score-display">0</div>
-        <div id="mino-count-display" style="font-size:12px; color:#aaa;">NEXT: 1 / 10</div>
+    <!-- パズルセクション -->
+    <div id="puzzle-area">
+        <div id="bg-score">0</div>
+        <div id="mino-info" style="position:absolute; top:5px; right:5px; font-size:12px; color:var(--main-gold); z-index:2;">NEXT: 1/10</div>
         <canvas id="stage" width="300" height="900"></canvas>
+        
         <div id="controls">
             <div class="ctrl-btn" onmousedown="handleMove(-1,0)" ontouchstart="handleMove(-1,0,event)">←</div>
             <div class="ctrl-btn" onmousedown="handleRotate()" ontouchstart="handleRotate(event)">↻</div>
             <div class="ctrl-btn" onmousedown="handleMove(1,0)" ontouchstart="handleMove(1,0,event)">→</div>
-            <div class="ctrl-btn down-btn" style="grid-column: 2;"
-                 onmousedown="startRapidDrop()" onmouseup="stopRapidDrop()" onmouseleave="stopRapidDrop()"
-                 ontouchstart="startRapidDrop(event)" ontouchend="stopRapidDrop(event)">↓</div>
+            <div class="ctrl-btn" style="grid-column: 2;" onmousedown="startRapidDrop()" onmouseup="stopRapidDrop()" ontouchstart="startRapidDrop(event)" ontouchend="stopRapidDrop(event)">↓</div>
+        </div>
+    </div>
+
+    <!-- 説明文（ズレ修正済み） -->
+    <div class="manual">
+        <table>
+            <tr>
+                <td><span class="icon" style="background:var(--main-red)"></span> 下に落ちる</td>
+                <td><span class="icon" style="background:var(--main-cyan)"></span> 空中固定</td>
+            </tr>
+            <tr>
+                <td><span class="icon" style="background:var(--main-gold)"></span> 得点2倍</td>
+                <td><span class="icon bomb"></span> 周囲爆発</td>
+            </tr>
+        </table>
+        <div style="margin-top:5px; border-top:1px solid #444; padding-top:5px; text-align:center;">
+            横一列で<b style="color:var(--main-gold)">300点</b> / ↓キーで加点
         </div>
     </div>
 </div>
 
 <script>
-// --- 前回のロジックを継承・改善 ---
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyDkQuswbQDk6-cCgKDhUzZ6eL4WqHQ4lfnhOjc_A_pQ29tGzBBHvIUXx5u2VylU3HCWg/exec";
 const COLS = 20, ROWS = 60, SIZE = 15;
 let stats = { a: 4.0, b: 2.0, c: 4.0, d: 0.0, e: 0.0, g: 1.0 };
-let hp = 120, turns = 10, minoRemaining = 10;
+let hp = 120, turns = 10, minoRemaining = 10, score = 0;
 let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-let currentPiece = null, score = 0, isGameOver = false, lastTime = 0, dropIntervalId = null, scoreIntervalId = null;
-const colors = { hard: "#00ffcc", soft: "#ff4444", gold: "#ffd700", bomb: "#ff6600" };
+let currentPiece = null, isGameOver = false, scoreSubmitted = false;
+let dropIntervalId = null, lastTime = 0;
 
-// キーボード操作の追加
+// キーボード操作
 window.addEventListener('keydown', e => {
     if(!currentPiece || isGameOver) return;
-    switch(e.key) {
-        case 'ArrowLeft': case 'a': handleMove(-1, 0); break;
-        case 'ArrowRight': case 'd': handleMove(1, 0); break;
-        case 'ArrowUp': case 'w': case ' ': handleRotate(); break;
-        case 'ArrowDown': case 's': if(!dropIntervalId) startRapidDrop(); break;
-    }
+    if(e.key === 'ArrowLeft') handleMove(-1,0);
+    if(e.key === 'ArrowRight') handleMove(1,0);
+    if(e.key === 'ArrowUp' || e.key === ' ') handleRotate();
+    if(e.key === 'ArrowDown' && !dropIntervalId) startRapidDrop();
 });
-window.addEventListener('keyup', e => {
-    if(e.key === 'ArrowDown' || e.key === 's') stopRapidDrop();
-});
+window.addEventListener('keyup', e => { if(e.key === 'ArrowDown') stopRapidDrop(); });
 
-function addStat(key, amount) {
-    if (key === 'a') stats.a += amount / (1 + stats.a * 0.15);
-    else stats[key] += amount;
+function train(type) {
+    if (turns <= 0) return;
+    if(type === 'A' && hp >= 10) { stats.a += 1.5; hp -= 10; turns--; }
+    if(type === 'B' && hp >= 10) { stats.b += 1.5; hp -= 10; turns--; }
+    if(type === 'REST') { hp = Math.min(120, hp + 50); turns--; }
+    updateUI();
 }
 
 function updateUI() {
     document.getElementById('hp').innerText = Math.floor(hp);
     document.getElementById('turns').innerText = turns;
-    ['a','b','e'].forEach(s => {
-        let val = Math.max(0, stats[s]);
-        document.getElementById('val-'+s).innerText = val.toFixed(1);
-        document.getElementById('bar-'+s).style.width = Math.min(100, (val / 20) * 100) + "%";
-    });
-    updatePreview();
-}
-
-function generateBlockData() {
-    let blocks = [];
-    const countA = Math.max(1, Math.floor(stats.a));
-    for(let i=0; i < countA; i++) {
-        if(i === 0) blocks.push({x: 0, y: 0, type: "soft"});
-        else {
-            let targetBlock = blocks[Math.floor(Math.random()*blocks.length)];
-            let dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].sort(()=>Math.random()-0.5);
-            for(let d of dirs) {
-                let nx = targetBlock.x + d.x, ny = targetBlock.y + d.y;
-                if (!blocks.some(b => b.x === nx && b.y === ny)) { blocks.push({ x: nx, y: ny, type: "soft" }); break; }
-            }
-        }
-    }
-    let indices = blocks.map((_, i) => i).sort(()=>Math.random()-0.5);
-    let cur = 0;
-    for(let i=0; i < Math.floor(stats.e) && cur < indices.length; i++) blocks[indices[cur++]].type = "bomb";
-    for(let i=0; i < Math.floor(stats.d) && cur < indices.length; i++) blocks[indices[cur++]].type = "gold";
-    for(let i=0; i < Math.floor(stats.b) && cur < indices.length; i++) blocks[indices[cur++]].type = "hard";
-    return blocks;
-}
-
-function updatePreview() {
-    const canvas = document.getElementById('preview-canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const blocks = generateBlockData();
-    const pSize = 6;
-    const cx = canvas.width/2, cy = canvas.height/2;
-    blocks.forEach(b => { 
-        ctx.fillStyle = colors[b.type]; 
-        ctx.fillRect(cx+b.x*pSize, cy+b.y*pSize, pSize-1, pSize-1); 
-        if(b.type==='bomb') { ctx.fillStyle="white"; ctx.fillRect(cx+b.x*pSize+2, cy+b.y*pSize+2, 2, 2); }
-    });
-}
-
-function train(type) {
-    if (turns <= 0) return;
-    if(type==='A' && hp>=10){ addStat('a', 2); stats.e+=0.1; hp-=10; }
-    if(type==='B' && hp>=10){ addStat('b', 2); hp-=10; }
-    if(type==='D' && hp>=20){ addStat('d', 1); hp-=20; }
-    if(type==='G' && hp>=15){ stats.g += 0.5; hp-=15; }
-    if(type==='REST') hp = Math.min(120, hp+60);
-    if(type!=='REST') turns--; else turns--;
-    updateUI();
+    document.getElementById('val-a').innerText = stats.a.toFixed(1);
+    document.getElementById('bar-a').style.width = (stats.a / 20 * 100) + "%";
+    document.getElementById('val-b').innerText = stats.b.toFixed(1);
+    document.getElementById('bar-b').style.width = (stats.b / 20 * 100) + "%";
 }
 
 function finishBreeding() {
-    document.getElementById('start-btn').style.display = 'none';
-    spawnPiece(); requestAnimationFrame(gameLoop);
+    document.getElementById('breeding-screen').style.display = 'none';
+    spawnPiece();
+    requestAnimationFrame(gameLoop);
 }
 
 function spawnPiece() {
     if (minoRemaining <= 0) { endGame(); return; }
-    document.getElementById('mino-count-display').innerText = `NEXT: ${11-minoRemaining} / 10`;
-    currentPiece = { x: Math.floor(COLS/2), y: 1, blocks: generateBlockData() };
-    if (checkCollision()) endGame();
+    document.getElementById('mino-info').innerText = `NEXT: ${11-minoRemaining}/10`;
+    let blocks = [];
+    for(let i=0; i<Math.floor(stats.a); i++) {
+        if(i===0) blocks.push({x:0, y:0, type:'soft'});
+        else {
+            let b = blocks[Math.floor(Math.random()*blocks.length)];
+            let d = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].sort(()=>Math.random()-0.5)[0];
+            blocks.push({x:b.x+d.x, y:b.y+d.y, type:'soft'});
+        }
+    }
+    // 特殊ブロック付与
+    blocks.forEach((b, i) => {
+        if(i > 0 && Math.random() < 0.1) b.type = 'bomb';
+        else if(i > 0 && Math.random() < 0.15) b.type = 'hard';
+    });
+
+    currentPiece = { x: Math.floor(COLS/2), y: 2, blocks };
+    if(checkCollision()) endGame();
     minoRemaining--;
-}
-
-function endGame() {
-    isGameOver = true; document.getElementById('game-msg').style.display = 'block';
-    const name = prompt("パズル完了！ スコア: " + Math.floor(score) + "\n名前を登録しますか？", "ななし");
-    if(name) submitScore(name, score); else location.reload();
-}
-
-async function submitScore(name, score) {
-    try {
-        await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ name, score }) });
-        location.reload();
-    } catch (e) { alert("送信エラー"); location.reload(); }
 }
 
 function gameLoop(time = 0) {
     if (isGameOver) return;
-    if (time - lastTime > (400 * stats.g)) { move(0, 1); lastTime = time; }
-    draw(); requestAnimationFrame(gameLoop);
+    if (time - lastTime > 500) { move(0, 1); lastTime = time; }
+    draw();
+    requestAnimationFrame(gameLoop);
 }
 
 function draw() {
     const ctx = document.getElementById('stage').getContext('2d');
-    ctx.clearRect(0, 0, 300, 900);
-    grid.forEach((row, y) => row.forEach((cell, x) => { if (cell) drawSq(ctx, x, y, cell.type); }));
-    if (currentPiece) currentPiece.blocks.forEach(b => drawSq(ctx, currentPiece.x + b.x, currentPiece.y + b.y, b.type));
+    ctx.clearRect(0,0,300,900);
+    grid.forEach((row, y) => row.forEach((cell, x) => {
+        if(cell) drawSq(ctx, x, y, cell.type);
+    }));
+    if(currentPiece) currentPiece.blocks.forEach(b => drawSq(ctx, currentPiece.x+b.x, currentPiece.y+b.y, b.type));
 }
 
 function drawSq(ctx, x, y, type) {
+    const colors = { soft:'#ff4444', hard:'#00ffcc', gold:'#ffd700', bomb:'#ff6600' };
     ctx.fillStyle = colors[type];
-    ctx.fillRect(x * SIZE, y * SIZE, SIZE - 1, SIZE - 1);
-    if(type==='bomb'){ ctx.fillStyle="white"; ctx.beginPath(); ctx.arc(x*SIZE+SIZE/2, y*SIZE+SIZE/2, 2, 0, 7); ctx.fill(); }
+    ctx.fillRect(x*SIZE, y*SIZE, SIZE-1, SIZE-1);
+    if(type === 'bomb') { ctx.fillStyle="white"; ctx.fillRect(x*SIZE+5, y*SIZE+5, 4, 4); }
 }
 
 function move(dx, dy) {
     currentPiece.x += dx; currentPiece.y += dy;
-    if (checkCollision()) {
+    if(checkCollision()){
         currentPiece.x -= dx; currentPiece.y -= dy;
-        if (dy > 0) lockPiece();
+        if(dy > 0) lockPiece();
         return false;
     }
     return true;
 }
 
-function rotate() {
+function handleRotate() {
     const old = currentPiece.blocks;
-    currentPiece.blocks = currentPiece.blocks.map(b => ({ x: -b.y, y: b.x, type: b.type }));
-    if (checkCollision()) currentPiece.blocks = old;
+    currentPiece.blocks = currentPiece.blocks.map(b => ({x:-b.y, y:b.x, type:b.type}));
+    if(checkCollision()) currentPiece.blocks = old;
 }
 
 function checkCollision() {
     return currentPiece.blocks.some(b => {
-        let nx = currentPiece.x + b.x, ny = currentPiece.y + b.y;
-        return nx < 0 || nx >= COLS || ny >= ROWS || (ny >= 0 && grid[ny][nx]);
+        let nx = currentPiece.x+b.x, ny = currentPiece.y+b.y;
+        return nx<0 || nx>=COLS || ny>=ROWS || (ny>=0 && grid[ny][nx]);
     });
 }
 
 function lockPiece() {
     currentPiece.blocks.forEach(b => {
-        let nx = currentPiece.x + b.x, ny = currentPiece.y + b.y;
-        if (ny >= 0 && ny < ROWS) {
-            grid[ny][nx] = { type: b.type };
-            if (b.type === "bomb") executeBomb(nx, ny);
+        let nx = currentPiece.x+b.x, ny = currentPiece.y+b.y;
+        if(ny>=0 && ny<ROWS) {
+            if(b.type === 'bomb') {
+                for(let iy=-1; iy<=1; iy++) for(let ix=-1; ix<=1; ix++) {
+                    if(ny+iy>=0 && ny+iy<ROWS && nx+ix>=0 && nx+ix<COLS) grid[ny+iy][nx+ix] = null;
+                }
+            } else {
+                grid[ny][nx] = {type: b.type};
+            }
         }
     });
-    applyGravity(); calculateScore(); spawnPiece();
-}
-
-function executeBomb(nx, ny) {
-    for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
-        let tx = nx+dx, ty = ny+dy;
-        if(tx>=0 && tx<COLS && ty>=0 && ty<ROWS) grid[ty][tx] = null;
-    }
-}
-
-function applyGravity() {
+    // 重力
     let moved = true;
     while(moved) {
         moved = false;
-        for (let y = ROWS - 2; y >= 0; y--) for (let x = 0; x < COLS; x++) {
-            if (grid[y][x] && (grid[y][x].type === "soft" || grid[y][x].type === "gold") && !grid[y+1][x]) {
+        for(let y=ROWS-2; y>=0; y--) for(let x=0; x<COLS; x++) {
+            if(grid[y][x] && grid[y][x].type !== 'hard' && !grid[y+1][x]) {
                 grid[y+1][x] = grid[y][x]; grid[y][x] = null; moved = true;
             }
         }
     }
-}
-
-function calculateScore() {
-    let bonus = 0, blockScore = 0;
+    // スコア計算
     grid.forEach((row, y) => {
-        if(row.filter(b => b).length === COLS) bonus += 300;
-        row.forEach(b => { if(b) blockScore += (b.type === "gold" ? (ROWS-y)*2 : (ROWS-y)); });
+        if(row.every(cell => cell)) {
+            score += 300;
+            grid.splice(y, 1); grid.unshift(Array(COLS).fill(null));
+        }
+        row.forEach(cell => { if(cell) score += (ROWS-y); });
     });
-    score += bonus + blockScore;
-    document.getElementById('score-display').innerText = Math.floor(score);
+    document.getElementById('bg-score').innerText = Math.floor(score);
+    spawnPiece();
 }
 
-function handleMove(dx, dy, e) { if(e) e.preventDefault(); move(dx, dy); }
-function handleRotate(e) { if(e) e.preventDefault(); rotate(); }
-function startRapidDrop(e) { 
-    if(e) e.preventDefault(); 
+function startRapidDrop() {
     if(dropIntervalId) return;
-    scoreIntervalId = setInterval(() => { score += 10; document.getElementById('score-display').innerText = Math.floor(score); }, 100);
-    dropIntervalId = setInterval(() => { move(0,1); }, 50); 
+    dropIntervalId = setInterval(() => { score += 5; move(0,1); document.getElementById('bg-score').innerText = Math.floor(score); }, 50);
 }
-function stopRapidDrop(e) { 
-    if(e) e.preventDefault(); 
-    clearInterval(dropIntervalId); clearInterval(scoreIntervalId);
-    dropIntervalId = null; scoreIntervalId = null;
+function stopRapidDrop() { clearInterval(dropIntervalId); dropIntervalId = null; }
+
+function handleMove(dx, dy, e) { if(e) e.preventDefault(); move(dx,dy); }
+
+function endGame() {
+    if(isGameOver) return;
+    isGameOver = true;
+    if(scoreSubmitted) return;
+    document.getElementById('game-msg').style.display = 'block';
+    
+    setTimeout(async () => {
+        const name = prompt("パズル終了！スコア: " + Math.floor(score) + "\n名前を入力してください", "ななし");
+        if(name && !scoreSubmitted) {
+            scoreSubmitted = true;
+            try {
+                await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ name, score }) });
+            } catch (e) { console.error(e); }
+        }
+        location.reload(); // 最初の画面に戻る
+    }, 500);
 }
 
 updateUI();
