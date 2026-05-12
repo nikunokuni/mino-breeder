@@ -234,7 +234,7 @@ function updatePreview() {
     blocks.forEach(b => { drawSq(ctx, 0, 0, b.type, cx+b.x*pSize, cy+b.y*pSize, pSize); });
 }
 
-function train(type) {
+function train(type,cost) {
     if (turns <= 0) return;
     if (type !== 'REST' && hp < cost) {
         alert("HPが足りません！休憩するか他のトレーニングを選んでください。");
