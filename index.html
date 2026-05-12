@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ミノ・ブリーダー v40 - Fixed</title>
+    <title>ミノ・ブリーダー v41 - Layout Fixed</title>
     <style>
         :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; }
         body { 
             background-color: #1a1a1a;
-            background-image: linear-gradient(rgba(26, 26, 26, 0.5), rgba(26, 26, 26, 0.5)), url('./youtube-header.png');
-            background-size: cover;
-            background-attachment: fixed;
-            background-position: center;
             color: white; font-family: sans-serif; margin: 0; padding: 10px; 
             user-select: none; -webkit-user-select: none;
         }
@@ -28,43 +24,63 @@
         .icon.gold { background: var(--main-gold); }
         .icon.bomb { background: #ff4500; position: relative; }
         .icon.bomb::after { content: ''; position: absolute; width: 6px; height: 6px; background: white; border-radius: 50%; top: 5px; left: 5px; }
+        
         .main-panel { background: rgba(100, 100, 100, 0.7); border-radius: 10px; padding: 15px; box-sizing: border-box; backdrop-filter: blur(5px); }
         .panel-grid { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 15px; }
         .info-box { background: #111; padding: 10px; border-radius: 5px; font-size: 14px; border-left: 4px solid var(--main-gold); margin-bottom: 10px; font-weight: bold; }
         .high-score { float: right; color: var(--main-gold); }
+        
+        /* ステータスゲージ設定 */
         .stat-row { margin-bottom: 8px; font-size: 11px; }
-        .stat-bar { background: #444; height: 6px; width: 100%; margin-top: 3px; border-radius: 3px; overflow: hidden; }
-        .stat-fill { background: var(--main-cyan); height: 100%; transition: width 0.3s; }
+        .stat-bar { background: #333; height: 8px; width: 100%; margin-top: 4px; border-radius: 4px; overflow: hidden; border: 1px solid #444; }
+        .stat-fill { background: var(--main-cyan); height: 100%; width: 0%; transition: width 0.3s; }
         .gold-fill { background: var(--main-gold); }
         .bomb-fill { background: #ff4500; }
         .gravity-fill { background: #ff00ff; }
+        
         h3 { margin: 0 0 8px 0; font-size: 13px; color: var(--main-cyan); border-bottom: 1px solid #444; padding-bottom: 4px; }
         .btn-group { display: flex; flex-direction: column; gap: 6px; }
         .spacer { margin-top: 10px; }
         button { padding: 9px; cursor: pointer; border: none; border-radius: 5px; background: #444; color: white; font-size: 11px; font-weight: bold; text-align: left; }
         button:hover { background: #555; }
         .cost-tag { float: right; color: #ff8888; font-size: 10px; }
-        .start-btn { background: var(--main-gold); color: #000; width: 100%; text-align: center; font-size: 16px; height: 50px; margin-top: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 5px; display: block; }
+        .start-btn { background: var(--main-gold); color: #000; width: 100%; text-align: center; font-size: 16px; height: 50px; margin-top: 15px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; }
         .preview-area { background: #111; border: 1px solid #444; border-radius: 5px; padding: 8px; margin-top: 10px; text-align: center; }
         #preview-canvas { background: #000; }
+
         .right-area { flex: 0 0 320px; text-align: center; }
         #score-display { margin: 0; color: var(--main-gold); font-size: 32px; font-weight: bold; }
         #mino-count-display { color: #aaa; font-size: 14px; margin-bottom: 10px; font-weight: bold; }
         canvas#stage { border: 2px solid #555; background: rgba(0,0,0,0.9); width: 300px; height: 85vh; max-height: 800px; }
-        #controls { 
-    display: grid; 
-    grid-template-columns: repeat(3, 1fr); /* 3列 */
-    gap: 12px; 
-    margin: 20px auto; 
-    width: 280px; 
-    touch-action: none; 
-}
 
-/* 下ボタンだけ2段目の真ん中に配置し、横に広げる設定 */
-.down-btn {
-    grid-column: 2; /* 2列目に配置 */
-    background: rgba(80, 80, 80, 0.95); /* 少し色を変えて目立たせる */
-}
+        /* --- コントローラー修正 --- */
+        #controls { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 12px; 
+            margin: 20px auto; 
+            width: 280px; 
+            touch-action: none; 
+        }
+        .ctrl-btn { 
+            height: 60px; 
+            background: rgba(51, 51, 51, 0.9); 
+            border: 2px solid #555; 
+            color: white; 
+            font-size: 28px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 10px; 
+            user-select: none; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        .ctrl-btn:active { background: #666; }
+        .down-btn {
+            grid-column: 2; /* 2段目の真ん中 */
+            background: rgba(80, 80, 80, 0.95);
+        }
+
         #ranking-area { background: rgba(0,0,0,0.8); margin-top: 15px; padding: 15px; border-radius: 8px; font-size: 13px; border: 1px solid var(--main-gold); display: none; text-align: left; }
         @media (max-width: 900px) { #game-screen { flex-direction: column; align-items: center; } .left-area, .right-area { width: 100%; max-width: 600px; } }
     </style>
@@ -122,14 +138,18 @@
         <div id="score-display">0</div>
         <div id="mino-count-display">NEXT: 1 / 10</div>
         <canvas id="stage" width="300" height="900"></canvas>
+        
+        <!-- コントローラー部分 -->
         <div id="controls">
-   　　　　 <div class="ctrl-btn" onmousedown="handleMove(-1,0)" ontouchstart="handleMove(-1,0,event)">←</div>
-  　　　　  <div class="ctrl-btn" style="color:var(--main-cyan)" onmousedown="handleRotate()" ontouchstart="handleRotate(event)">↻</div>
-  　　　　  <div class="ctrl-btn" onmousedown="handleMove(1,0)" ontouchstart="handleMove(1,0,event)">→</div>
-    　　　　<div class="ctrl-btn down-btn" 
-         　　　onmousedown="startRapidDrop()" onmouseup="stopRapidDrop()" onmouseleave="stopRapidDrop()"
-         　　　ontouchstart="startRapidDrop(event)" ontouchend="stopRapidDrop(event)">↓</div>
-　　　　 </div>
+            <div class="ctrl-btn" onmousedown="handleMove(-1,0)" ontouchstart="handleMove(-1,0,event)">←</div>
+            <div class="ctrl-btn" style="color:var(--main-cyan)" onmousedown="handleRotate()" ontouchstart="handleRotate(event)">↻</div>
+            <div class="ctrl-btn" onmousedown="handleMove(1,0)" ontouchstart="handleMove(1,0,event)">→</div>
+            
+            <div class="ctrl-btn down-btn" 
+                 onmousedown="startRapidDrop()" onmouseup="stopRapidDrop()" onmouseleave="stopRapidDrop()"
+                 ontouchstart="startRapidDrop(event)" ontouchend="stopRapidDrop(event)">↓</div>
+        </div>
+
         <div id="ranking-area">
             <h4 style="margin: 0 0 10px 0; color: var(--main-gold); text-align: center;">本日のランキング TOP5</h4>
             <div id="ranking-list"></div>
@@ -139,10 +159,8 @@
 </div>
 
 <script>
-// --- GAS設定 ---
-const GAS_URL = https://docs.google.com/spreadsheets/d/14LmdZruDI4Wag7LC4lt4O4vPi5PKujfrJobO8RSy_tk/edit?hl=ja&gid=0#gid=0;
+const GAS_URL =https://docs.google.com/spreadsheets/d/14LmdZruDI4Wag7LC4lt4O4vPi5PKujfrJobO8RSy_tk/edit?hl=ja&gid=0#gid=0;
 
-// --- グローバル変数 ---
 const COLS = 20, ROWS = 60, SIZE = 15;
 let stats = { a: 4.0, b: 2.0, c: 4.0, d: 0.0, e: 0.0, g: 1.0 };
 let hp = 120, turns = 10, minoRemaining = 10, minoCount = 0;
@@ -151,19 +169,27 @@ let currentPiece = null, score = 0, isGameOver = false, lastTime = 0, dropInterv
 let highScore = localStorage.getItem('mino_breeder_highscore') || 0;
 const colors = { hard: "#00ffcc", soft: "#ff4444", gold: "#ffd700", bomb: "#ff4500" };
 
-// --- 初期化 ---
 document.getElementById('high-score').innerText = highScore;
-
 const rnd = (min, max) => Math.random() * (max - min) + min;
 
+// UI更新（ゲージの計算を修正）
 function updateUI() {
     document.getElementById('hp').innerText = Math.floor(hp);
     document.getElementById('turns').innerText = turns;
     ['a','b','c','d','e','g'].forEach(s => {
         let val = Math.max(0, stats[s]);
         document.getElementById('val-'+s).innerText = val.toFixed(s==='g'?2:1);
-        let max = (s==='a')?40:(s==='c')?30:Math.max(stats.a, 15);
-        document.getElementById('bar-'+s).style.width = Math.min(100, (val/max)*100) + "%";
+        
+        // ゲージの最大値設定（以前のように0から増えていくように調整）
+        let max = 20; 
+        if(s==='a') max = 40;
+        if(s==='c') max = 30;
+        if(s==='g') {
+            // 重力だけは特殊（1.0から減るのが良いのか増えるのが良いのかによりますが、一旦0-2の範囲で表示）
+            document.getElementById('bar-g').style.width = Math.min(100, (val / 2) * 100) + "%";
+        } else {
+            document.getElementById('bar-'+s).style.width = Math.min(100, (val / max) * 100) + "%";
+        }
     });
     updatePreview();
 }
@@ -235,7 +261,7 @@ function spawnPiece() {
     if (minoRemaining <= 0) { 
         isGameOver = true; stopRapidDrop();
         if(score > highScore) localStorage.setItem('mino_breeder_highscore', score);
-        const name = prompt("ゲーム終了！スコア: " + score + "\nランキングに登録する名前を入力してください", "ななし");
+        const name = prompt("ゲーム終了！スコア: " + score + "\nお名前を登録しますか？", "ななし");
         if(name) submitScore(name, score);
         else location.reload();
         return; 
@@ -251,13 +277,13 @@ async function submitScore(name, score) {
     const list = document.getElementById('ranking-list');
     area.style.display = 'block';
     if(!GAS_URL || GAS_URL.includes("ここに")) {
-        list.innerText = "ランキング送信先(GAS)が設定されていません。"; return;
+        list.innerText = "ランキングURLが未設定です。"; return;
     }
     try {
         const response = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ name: name.substring(0, 10), score: score }) });
         const data = await response.json();
         list.innerHTML = data.map((e, i) => `<div>${i+1}位: ${e.name} - ${e.score}点</div>`).join('');
-    } catch (e) { list.innerText = "通信エラーが発生しました。"; }
+    } catch (e) { list.innerText = "通信エラー"; }
 }
 
 function gameLoop(time = 0) {
@@ -285,7 +311,6 @@ function draw() {
 function drawSq(ctx, x, y, type) {
     ctx.fillStyle = colors[type];
     ctx.fillRect(x * SIZE + 1, y * SIZE + 1, SIZE - 2, SIZE - 2);
-    if(type==='bomb'){ ctx.fillStyle="white"; ctx.beginPath(); ctx.arc(x*SIZE+SIZE/2, y*SIZE+SIZE/2, SIZE/4, 0, 7); ctx.fill(); }
 }
 
 function move(dx, dy) {
@@ -314,15 +339,16 @@ function checkCollision() {
 }
 
 function lockPiece() {
-    let bombPos = [];
     currentPiece.blocks.forEach(b => {
         let nx = currentPiece.x + b.x, ny = currentPiece.y + b.y;
-        if (ny >= 0) { grid[ny][nx] = { type: b.type }; if (b.type === "bomb") bombPos.push({x: nx, y: ny}); }
-    });
-    bombPos.forEach(p => {
-        for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
-            let tx = p.x + dx, ty = p.y + dy;
-            if(tx>=0 && tx<COLS && ty>=0 && ty<ROWS) grid[ty][tx] = null;
+        if (ny >= 0) {
+            grid[ny][nx] = { type: b.type };
+            if (b.type === "bomb") {
+                for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
+                    let tx = nx+dx, ty = ny+dy;
+                    if(tx>=0 && tx<COLS && ty>=0 && ty<ROWS) grid[ty][tx] = null;
+                }
+            }
         }
     });
     applyGravity(); calculateScore(); spawnPiece();
@@ -332,41 +358,35 @@ function applyGravity() {
     let moved = true;
     while(moved) {
         moved = false;
-        for (let y = ROWS - 2; y >= 0; y--) {
-            for (let x = 0; x < COLS; x++) {
-                if (grid[y][x] && grid[y][x].type !== "hard" && !grid[y+1][x]) {
-                    grid[y+1][x] = grid[y][x]; grid[y][x] = null; moved = true;
-                }
+        for (let y = ROWS - 2; y >= 0; y--) for (let x = 0; x < COLS; x++) {
+            if (grid[y][x] && grid[y][x].type !== "hard" && !grid[y+1][x]) {
+                grid[y+1][x] = grid[y][x]; grid[y][x] = null; moved = true;
             }
         }
     }
 }
 
 function calculateScore() {
-    let total = 0, lines = 0;
+    let total = 0;
     grid.forEach((row, y) => {
-        let rowCount = row.filter(b => b).length;
-        if (rowCount === COLS) lines++;
-        let mult = 1;
-        row.forEach(b => { if(b && b.type === "gold") mult *= 2; });
-        total += rowCount * (ROWS - y) * mult;
+        let count = row.filter(b => b).length;
+        if(count === COLS) total += 300;
+        row.forEach(b => { if(b && b.type === "gold") total += (ROWS-y)*2; else if(b) total += (ROWS-y); });
     });
-    score = total + (lines * 300);
+    score = total;
     document.getElementById('score-display').innerText = score;
 }
 
-function handleControlMove(dx, dy, e) { if (e) e.preventDefault(); move(dx, dy); draw(); }
-function handleControlRotate(e) { if (e) e.preventDefault(); rotate(); draw(); }
-function startRapidDrop(e) { if (e) e.preventDefault(); if(dropIntervalId) return; move(0,1); draw(); dropIntervalId = setInterval(() => { move(0,1); draw(); }, 50); }
-function stopRapidDrop(e) { if (e) e.preventDefault(); clearInterval(dropIntervalId); dropIntervalId = null; }
-
-window.addEventListener('keydown', e => {
-    if (!currentPiece || isGameOver) return;
-    if (e.key === 'ArrowLeft') move(-1, 0);
-    if (e.key === 'ArrowRight') move(1, 0);
-    if (e.key === 'ArrowDown') move(0, 1);
-    if (e.key === 'ArrowUp' || e.key === ' ') { rotate(); e.preventDefault(); }
-});
+// --- コントローラー用関数 ---
+function handleMove(dx, dy, e) { if(e) e.preventDefault(); move(dx, dy); draw(); }
+function handleRotate(e) { if(e) e.preventDefault(); rotate(); draw(); }
+function startRapidDrop(e) { 
+    if(e) e.preventDefault(); 
+    if(dropIntervalId) return; 
+    move(0,1); draw();
+    dropIntervalId = setInterval(() => { move(0,1); draw(); }, 50); 
+}
+function stopRapidDrop(e) { if(e) e.preventDefault(); clearInterval(dropIntervalId); dropIntervalId = null; }
 
 updateUI();
 </script>
