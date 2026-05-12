@@ -236,6 +236,10 @@ function updatePreview() {
 
 function train(type) {
     if (turns <= 0) return;
+    if (type !== 'REST' && hp < cost) {
+        alert("HPが足りません！休憩するか他のトレーニングを選んでください。");
+        return;
+    }
     switch(type) {
         case 'A': if(hp>=10){ addStat('a', rnd(1.5, 2.5)); stats.e+=0.1; hp-=10; } break;
         case 'B': if(hp>=10){ addStat('b', rnd(1.5, 2.5)); stats.e+=0.1; hp-=10; } break;
