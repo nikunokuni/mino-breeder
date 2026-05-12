@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ミノ・ブリーダー v39 - Online Ranking</title>
+    <title>ミノ・ブリーダー v40 - Fixed</title>
     <style>
         :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; }
-        
         body { 
             background-color: #1a1a1a;
             background-image: linear-gradient(rgba(26, 26, 26, 0.5), rgba(26, 26, 26, 0.5)), url('./youtube-header.png');
@@ -14,69 +13,48 @@
             background-attachment: fixed;
             background-position: center;
             color: white; font-family: sans-serif; margin: 0; padding: 10px; 
-            user-select: none;
-            -webkit-user-select: none;
+            user-select: none; -webkit-user-select: none;
         }
-        
         #game-screen { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; justify-content: center; align-items: flex-start; }
         .left-area { flex: 1; max-width: 600px; display: flex; flex-direction: column; gap: 15px; }
-        
         .manual { background: rgba(51, 51, 51, 0.65); padding: 15px; border-radius: 8px; font-size: 13px; line-height: 1.4; border: 1px solid #555; box-sizing: border-box; backdrop-filter: blur(5px); }
         .manual b { color: var(--main-gold); display: block; margin-bottom: 8px; }
         .manual ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .manual li { display: flex; align-items: center; }
         .manual li.full-row { grid-column: span 2; margin-top: 4px; border-top: 1px solid #555; padding-top: 8px; }
-
         .icon { width: 16px; height: 16px; display: inline-block; margin-right: 6px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
         .icon.soft { background: var(--main-red); }
         .icon.hard { background: var(--main-cyan); }
         .icon.gold { background: var(--main-gold); }
         .icon.bomb { background: #ff4500; position: relative; }
         .icon.bomb::after { content: ''; position: absolute; width: 6px; height: 6px; background: white; border-radius: 50%; top: 5px; left: 5px; }
-
         .main-panel { background: rgba(100, 100, 100, 0.7); border-radius: 10px; padding: 15px; box-sizing: border-box; backdrop-filter: blur(5px); }
         .panel-grid { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 15px; }
-
         .info-box { background: #111; padding: 10px; border-radius: 5px; font-size: 14px; border-left: 4px solid var(--main-gold); margin-bottom: 10px; font-weight: bold; }
         .high-score { float: right; color: var(--main-gold); }
-
         .stat-row { margin-bottom: 8px; font-size: 11px; }
         .stat-bar { background: #444; height: 6px; width: 100%; margin-top: 3px; border-radius: 3px; overflow: hidden; }
         .stat-fill { background: var(--main-cyan); height: 100%; transition: width 0.3s; }
         .gold-fill { background: var(--main-gold); }
         .bomb-fill { background: #ff4500; }
         .gravity-fill { background: #ff00ff; }
-
         h3 { margin: 0 0 8px 0; font-size: 13px; color: var(--main-cyan); border-bottom: 1px solid #444; padding-bottom: 4px; }
         .btn-group { display: flex; flex-direction: column; gap: 6px; }
         .spacer { margin-top: 10px; }
-
         button { padding: 9px; cursor: pointer; border: none; border-radius: 5px; background: #444; color: white; font-size: 11px; font-weight: bold; text-align: left; }
         button:hover { background: #555; }
         .cost-tag { float: right; color: #ff8888; font-size: 10px; }
-
         .start-btn { background: var(--main-gold); color: #000; width: 100%; text-align: center; font-size: 16px; height: 50px; margin-top: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 5px; display: block; }
         .preview-area { background: #111; border: 1px solid #444; border-radius: 5px; padding: 8px; margin-top: 10px; text-align: center; }
         #preview-canvas { background: #000; }
-
         .right-area { flex: 0 0 320px; text-align: center; }
         #score-display { margin: 0; color: var(--main-gold); font-size: 32px; font-weight: bold; }
         #mino-count-display { color: #aaa; font-size: 14px; margin-bottom: 10px; font-weight: bold; }
         canvas#stage { border: 2px solid #555; background: rgba(0,0,0,0.9); width: 300px; height: 85vh; max-height: 800px; }
-        
         #controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; width: 300px; margin-left: auto; margin-right: auto; touch-action: none;}
         .ctrl-btn { height: 60px; background: rgba(51, 51, 51, 0.9); border: 2px solid #555; color: white; font-size: 28px; display: flex; align-items: center; justify-content: center; border-radius: 10px; user-select: none; backdrop-filter: blur(5px); -webkit-tap-highlight-color: transparent; }
-        .ctrl-btn:active { background: rgba(85, 85, 85, 0.9); }
-
-        /* ランキングエリア */
         #ranking-area { background: rgba(0,0,0,0.8); margin-top: 15px; padding: 15px; border-radius: 8px; font-size: 13px; border: 1px solid var(--main-gold); display: none; text-align: left; }
-        #ranking-list div { margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 3px; }
-
-        @media (max-width: 900px) {
-            #game-screen { flex-direction: column; align-items: center; }
-            .left-area, .right-area { width: 100%; max-width: 600px; }
-            #controls { display: grid; }
-        }
+        @media (max-width: 900px) { #game-screen { flex-direction: column; align-items: center; } .left-area, .right-area { width: 100%; max-width: 600px; } }
     </style>
 </head>
 <body>
@@ -93,13 +71,11 @@
                 <li class="full-row">横一列そろえると一列につき<b>300点ボーナス</b></li>
             </ul>
         </div>
-
         <div class="main-panel">
             <div class="info-box">
                 HP: <span id="hp">120</span> | 回数: <span id="turns">10</span>
                 <span class="high-score">BEST: <span id="high-score">0</span></span>
             </div>
-
             <div class="panel-grid">
                 <div class="status-col">
                     <h3>ステータス</h3>
@@ -111,7 +87,6 @@
                     <div class="stat-row">重力: <span id="val-g">1.00</span> <div class="stat-bar"><div id="bar-g" class="stat-fill gravity-fill"></div></div></div>
                     <div class="preview-area"><canvas id="preview-canvas" width="120" height="120"></canvas></div>
                 </div>
-
                 <div class="train-col">
                     <h3>トレーニング</h3>
                     <div class="btn-group">
@@ -131,47 +106,54 @@
             <button id="start-btn" class="start-btn" onclick="finishBreeding()">育成完了：パズル開始</button>
         </div>
     </div>
-
     <div class="right-area">
         <div id="score-display">0</div>
         <div id="mino-count-display">NEXT: 1 / 10</div>
         <canvas id="stage" width="300" height="900"></canvas>
-        
         <div id="controls">
             <div class="ctrl-btn" onmousedown="handleControlMove(-1,0,event)" ontouchstart="handleControlMove(-1,0,event)">←</div>
-            <div class="ctrl-btn" 
-                 onmousedown="startRapidDrop(event)" onmouseup="stopRapidDrop(event)" onmouseleave="stopRapidDrop(event)"
-                 ontouchstart="startRapidDrop(event)" ontouchend="stopRapidDrop(event)">↓</div>
+            <div class="ctrl-btn" onmousedown="startRapidDrop(event)" onmouseup="stopRapidDrop(event)" ontouchstart="startRapidDrop(event)" ontouchend="stopRapidDrop(event)">↓</div>
             <div class="ctrl-btn" onmousedown="handleControlMove(1,0,event)" ontouchstart="handleControlMove(1,0,event)">→</div>
             <div></div>
             <div class="ctrl-btn" style="color:var(--main-cyan)" onmousedown="handleControlRotate(event)" ontouchstart="handleControlRotate(event)">↻</div>
         </div>
-
-        <!-- ランキング表示 -->
         <div id="ranking-area">
             <h4 style="margin: 0 0 10px 0; color: var(--main-gold); text-align: center;">本日のランキング TOP5</h4>
-            <div id="ranking-list">読み込み中...</div>
+            <div id="ranking-list"></div>
             <button onclick="location.reload()" style="width:100%; margin-top:10px; text-align:center;">もう一度遊ぶ</button>
         </div>
     </div>
 </div>
 
 <script>
-// --- 【重要】GASのURLをここに貼り付けてください ---
-const GAS_URL = https://docs.google.com/spreadsheets/d/14LmdZruDI4Wag7LC4lt4O4vPi5PKujfrJobO8RSy_tk/edit?hl=ja&gid=0#gid=0;
+// --- GAS設定 ---
+const GAS_URL = "ここにURLを貼り付けてください";
 
+// --- グローバル変数 ---
 const COLS = 20, ROWS = 60, SIZE = 15;
 let stats = { a: 4.0, b: 2.0, c: 4.0, d: 0.0, e: 0.0, g: 1.0 };
-let hp = 120, maxHp = 120, turns = 10, minoRemaining = 10, minoCount = 0;
+let hp = 120, turns = 10, minoRemaining = 10, minoCount = 0;
 let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-let currentPiece = null, score = 0, isGameOver = false, lastTime = 0;
-let dropIntervalId = null;
+let currentPiece = null, score = 0, isGameOver = false, lastTime = 0, dropIntervalId = null;
 let highScore = localStorage.getItem('mino_breeder_highscore') || 0;
 const colors = { hard: "#00ffcc", soft: "#ff4444", gold: "#ffd700", bomb: "#ff4500" };
 
+// --- 初期化 ---
 document.getElementById('high-score').innerText = highScore;
 
 const rnd = (min, max) => Math.random() * (max - min) + min;
+
+function updateUI() {
+    document.getElementById('hp').innerText = Math.floor(hp);
+    document.getElementById('turns').innerText = turns;
+    ['a','b','c','d','e','g'].forEach(s => {
+        let val = Math.max(0, stats[s]);
+        document.getElementById('val-'+s).innerText = val.toFixed(s==='g'?2:1);
+        let max = (s==='a')?40:(s==='c')?30:Math.max(stats.a, 15);
+        document.getElementById('bar-'+s).style.width = Math.min(100, (val/max)*100) + "%";
+    });
+    updatePreview();
+}
 
 function generateBlockData() {
     let blocks = [];
@@ -196,6 +178,7 @@ function generateBlockData() {
 
 function updatePreview() {
     const canvas = document.getElementById('preview-canvas');
+    if(!canvas) return;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const blocks = generateBlockData();
@@ -215,30 +198,18 @@ function updatePreview() {
 function train(type) {
     if (turns <= 0) return;
     switch(type) {
-        case 'A': if(hp<10)return; stats.a+=rnd(1.5, 2.0); stats.e+=0.1; hp-=10; break;
-        case 'B': if(hp<10)return; stats.b+=rnd(1.5, 2.0); stats.e+=0.1; hp-=10; break;
-        case 'C': if(hp<10)return; stats.c+=rnd(1.5, 2.0); stats.e+=0.1; hp-=10; break;
-        case 'E': if(hp<10)return; stats.a+=1; stats.c+=1; stats.e+=0.2; stats.b/=2; hp-=10; break;
-        case 'I': if(hp<20)return; stats.c+=1.5; stats.d+=rnd(0.5, 0.7); stats.e+=rnd(0.1, 0.3); hp-=20; break;
-        case 'D': if(hp<20)return; stats.a+=1; stats.d+=rnd(0.6, 0.8); stats.e+=rnd(0.1, 0.3); hp-=20; break;
-        case 'F': if(hp<30)return; stats.d+=1; stats.e+=1; hp-=30; break;
-        case 'G': if(hp<15)return; stats.g*=0.9; stats.e-=0.6; hp-=15; break;
-        case 'H': if(hp<40)return; stats.a+=5; stats.e+=1.2; stats.b/=2; stats.c/=2; stats.d/=2; hp-=40; break;
-        case 'REST': hp = Math.min(maxHp, hp+60); break;
+        case 'A': if(hp>=10){ stats.a+=rnd(1.5, 2.0); stats.e+=0.1; hp-=10; } break;
+        case 'B': if(hp>=10){ stats.b+=rnd(1.5, 2.0); stats.e+=0.1; hp-=10; } break;
+        case 'C': if(hp>=10){ stats.c+=rnd(1.5, 2.0); stats.e+=0.1; hp-=10; } break;
+        case 'E': if(hp>=10){ stats.a+=1; stats.c+=1; stats.e+=0.2; stats.b/=2; hp-=10; } break;
+        case 'I': if(hp>=20){ stats.c+=1.5; stats.d+=rnd(0.5, 0.7); stats.e+=rnd(0.1, 0.3); hp-=20; } break;
+        case 'D': if(hp>=20){ stats.a+=1; stats.d+=rnd(0.6, 0.8); stats.e+=rnd(0.1, 0.3); hp-=20; } break;
+        case 'F': if(hp>=30){ stats.d+=1; stats.e+=1; hp-=30; } break;
+        case 'G': if(hp>=15){ stats.g*=0.9; stats.e-=0.6; hp-=15; } break;
+        case 'H': if(hp>=40){ stats.a+=5; stats.e+=1.2; stats.b/=2; stats.c/=2; stats.d/=2; hp-=40; } break;
+        case 'REST': hp = Math.min(120, hp+60); break;
     }
     turns--; updateUI();
-}
-
-function updateUI() {
-    document.getElementById('hp').innerText = Math.floor(hp);
-    document.getElementById('turns').innerText = turns;
-    ['a','b','c','d','e','g'].forEach(s => {
-        let val = Math.max(0, stats[s]);
-        document.getElementById('val-'+s).innerText = val.toFixed(s==='g'?2:1);
-        let max = s==='a'?40:s==='c'?30:Math.max(stats.a, 15);
-        document.getElementById('bar-'+s).style.width = Math.min(100, (val/max)*100) + "%";
-    });
-    updatePreview();
 }
 
 function finishBreeding() {
@@ -249,21 +220,11 @@ function finishBreeding() {
 
 function spawnPiece() {
     if (minoRemaining <= 0) { 
-        isGameOver = true; 
-        stopRapidDrop();
-        if(score > highScore) {
-            localStorage.setItem('mino_breeder_highscore', score);
-            document.getElementById('high-score').innerText = score;
-        }
-        
-        // ランキング送信フェーズへ
-        const playerName = prompt("育成終了！スコア: " + score + "\nランキングに登録する名前を入力してください", "ななし");
-        if(playerName) {
-            submitScore(playerName, score);
-        } else {
-            alert("Game Over! Score: " + score);
-            location.reload();
-        }
+        isGameOver = true; stopRapidDrop();
+        if(score > highScore) localStorage.setItem('mino_breeder_highscore', score);
+        const name = prompt("ゲーム終了！スコア: " + score + "\nランキングに登録する名前を入力してください", "ななし");
+        if(name) submitScore(name, score);
+        else location.reload();
         return; 
     }
     minoCount++;
@@ -276,23 +237,14 @@ async function submitScore(name, score) {
     const area = document.getElementById('ranking-area');
     const list = document.getElementById('ranking-list');
     area.style.display = 'block';
-    
     if(!GAS_URL || GAS_URL.includes("ここに")) {
-        list.innerText = "※GASのURLが設定されていないため表示できません。";
-        return;
+        list.innerText = "ランキング送信先(GAS)が設定されていません。"; return;
     }
-
     try {
-        const response = await fetch(GAS_URL, {
-            method: "POST",
-            body: JSON.stringify({ name: name.substring(0, 10), score: score })
-        });
+        const response = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ name: name.substring(0, 10), score: score }) });
         const data = await response.json();
-        list.innerHTML = data.map((entry, i) => `<div>${i+1}位: ${entry.name} - ${entry.score}点</div>`).join('');
-    } catch (e) {
-        list.innerText = "ランキングの取得に失敗しました。";
-        console.error(e);
-    }
+        list.innerHTML = data.map((e, i) => `<div>${i+1}位: ${e.name} - ${e.score}点</div>`).join('');
+    } catch (e) { list.innerText = "通信エラーが発生しました。"; }
 }
 
 function gameLoop(time = 0) {
@@ -305,35 +257,16 @@ function draw() {
     const canvas = document.getElementById('stage');
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // --- ガイドガイドラインの描画 ---
     for (let y = 0; y < ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
-            let isVerticalGuide = (x % 4 === 0);   // 4列ごとに縦
-            let isHorizontalGuide = (y % 10 === 0); // 10行ごとに横
-
-            if (isVerticalGuide || isHorizontalGuide) {
-                ctx.fillStyle = isHorizontalGuide 
-                    ? "rgba(255, 255, 255, 0.12)" 
-                    : "rgba(255, 255, 255, 0.05)";
+            if (x % 4 === 0 || y % 10 === 0) {
+                ctx.fillStyle = (y % 10 === 0) ? "rgba(255, 255, 255, 0.12)" : "rgba(255, 255, 255, 0.05)";
                 ctx.fillRect(x * SIZE, y * SIZE, SIZE, SIZE);
             }
         }
     }
-
-    // 積み上がったブロックの描画
-    grid.forEach((row, y) => {
-        row.forEach((cell, x) => {
-            if (cell) drawSq(ctx, x, y, cell.type);
-        });
-    });
-
-    // 動かしているミノの描画
-    if (currentPiece) {
-        currentPiece.blocks.forEach(b => {
-            drawSq(ctx, currentPiece.x + b.x, currentPiece.y + b.y, b.type);
-        });
-    }
+    grid.forEach((row, y) => row.forEach((cell, x) => { if (cell) drawSq(ctx, x, y, cell.type); }));
+    if (currentPiece) currentPiece.blocks.forEach(b => drawSq(ctx, currentPiece.x + b.x, currentPiece.y + b.y, b.type));
 }
 
 function drawSq(ctx, x, y, type) {
@@ -355,9 +288,8 @@ function move(dx, dy) {
 
 function rotate() {
     if(!currentPiece || isGameOver) return;
-    const rotated = currentPiece.blocks.map(b => ({ x: -b.y, y: b.x, type: b.type }));
     const old = currentPiece.blocks;
-    currentPiece.blocks = rotated;
+    currentPiece.blocks = currentPiece.blocks.map(b => ({ x: -b.y, y: b.x, type: b.type }));
     if (checkCollision()) currentPiece.blocks = old;
 }
 
@@ -387,9 +319,11 @@ function applyGravity() {
     let moved = true;
     while(moved) {
         moved = false;
-        for (let y = ROWS - 2; y >= 0; y--) for (let x = 0; x < COLS; x++) {
-            if (grid[y][x] && grid[y][x].type !== "hard" && !grid[y+1][x]) {
-                grid[y+1][x] = grid[y][x]; grid[y][x] = null; moved = true;
+        for (let y = ROWS - 2; y >= 0; y--) {
+            for (let x = 0; x < COLS; x++) {
+                if (grid[y][x] && grid[y][x].type !== "hard" && !grid[y+1][x]) {
+                    grid[y+1][x] = grid[y][x]; grid[y][x] = null; moved = true;
+                }
             }
         }
     }
@@ -408,36 +342,18 @@ function calculateScore() {
     document.getElementById('score-display').innerText = score;
 }
 
-// コントロール
+function handleControlMove(dx, dy, e) { if (e) e.preventDefault(); move(dx, dy); draw(); }
+function handleControlRotate(e) { if (e) e.preventDefault(); rotate(); draw(); }
+function startRapidDrop(e) { if (e) e.preventDefault(); if(dropIntervalId) return; move(0,1); draw(); dropIntervalId = setInterval(() => { move(0,1); draw(); }, 50); }
+function stopRapidDrop(e) { if (e) e.preventDefault(); clearInterval(dropIntervalId); dropIntervalId = null; }
+
 window.addEventListener('keydown', e => {
     if (!currentPiece || isGameOver) return;
     if (e.key === 'ArrowLeft') move(-1, 0);
     if (e.key === 'ArrowRight') move(1, 0);
     if (e.key === 'ArrowDown') move(0, 1);
-    if (e.code === 'Space' || e.key === 'ArrowUp') { rotate(); e.preventDefault(); }
+    if (e.key === 'ArrowUp' || e.key === ' ') { rotate(); e.preventDefault(); }
 });
-
-function handleControlMove(dx, dy, e) {
-    if (e && e.type === 'touchstart') e.preventDefault();
-    move(dx, dy); draw();
-}
-
-function handleControlRotate(e) {
-    if (e && e.type === 'touchstart') e.preventDefault();
-    rotate(); draw();
-}
-
-function startRapidDrop(e) { 
-    if (e && e.type === 'touchstart') e.preventDefault();
-    if(dropIntervalId || isGameOver) return; 
-    move(0,1); draw();
-    dropIntervalId = setInterval(() => { move(0,1); draw(); }, 50); 
-}
-
-function stopRapidDrop(e) { 
-    if (e && e.type === 'touchend') e.preventDefault();
-    clearInterval(dropIntervalId); dropIntervalId = null; 
-}
 
 updateUI();
 </script>
