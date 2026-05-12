@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ミノ・ブリーダー v41 - Layout Fixed</title>
+    <title>ミノ・ブリーダー 42- Final Build</title>
     <style>
         :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; }
         body { 
             background-color: #1a1a1a;
             color: white; font-family: sans-serif; margin: 0; padding: 10px; 
             user-select: none; -webkit-user-select: none;
+            overflow-x: hidden;
         }
         #game-screen { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; justify-content: center; align-items: flex-start; }
         .left-area { flex: 1; max-width: 600px; display: flex; flex-direction: column; gap: 15px; }
@@ -18,19 +19,17 @@
         .manual ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .manual li { display: flex; align-items: center; }
         .manual li.full-row { grid-column: span 2; margin-top: 4px; border-top: 1px solid #555; padding-top: 8px; }
-        .icon { width: 16px; height: 16px; display: inline-block; margin-right: 6px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+        .icon { width: 14px; height: 14px; display: inline-block; margin-right: 6px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
         .icon.soft { background: var(--main-red); }
         .icon.hard { background: var(--main-cyan); }
         .icon.gold { background: var(--main-gold); }
-        .icon.bomb { background: #ff4500; position: relative; }
-        .icon.bomb::after { content: ''; position: absolute; width: 6px; height: 6px; background: white; border-radius: 50%; top: 5px; left: 5px; }
+        .icon.bomb { background: #ff4500; }
         
         .main-panel { background: rgba(100, 100, 100, 0.7); border-radius: 10px; padding: 15px; box-sizing: border-box; backdrop-filter: blur(5px); }
         .panel-grid { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 15px; }
         .info-box { background: #111; padding: 10px; border-radius: 5px; font-size: 14px; border-left: 4px solid var(--main-gold); margin-bottom: 10px; font-weight: bold; }
         .high-score { float: right; color: var(--main-gold); }
         
-        /* ステータスゲージ設定 */
         .stat-row { margin-bottom: 8px; font-size: 11px; }
         .stat-bar { background: #333; height: 8px; width: 100%; margin-top: 4px; border-radius: 4px; overflow: hidden; border: 1px solid #444; }
         .stat-fill { background: var(--main-cyan); height: 100%; width: 0%; transition: width 0.3s; }
@@ -42,50 +41,31 @@
         .btn-group { display: flex; flex-direction: column; gap: 6px; }
         .spacer { margin-top: 10px; }
         button { padding: 9px; cursor: pointer; border: none; border-radius: 5px; background: #444; color: white; font-size: 11px; font-weight: bold; text-align: left; }
-        button:hover { background: #555; }
+        button:active { background: #666; }
         .cost-tag { float: right; color: #ff8888; font-size: 10px; }
         .start-btn { background: var(--main-gold); color: #000; width: 100%; text-align: center; font-size: 16px; height: 50px; margin-top: 15px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; }
         .preview-area { background: #111; border: 1px solid #444; border-radius: 5px; padding: 8px; margin-top: 10px; text-align: center; }
         #preview-canvas { background: #000; }
 
         .right-area { flex: 0 0 320px; text-align: center; }
-        #score-display { margin: 0; color: var(--main-gold); font-size: 32px; font-weight: bold; }
+        #score-display { margin: 0; color: var(--main-gold); font-size: 32px; font-weight: bold; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
         #mino-count-display { color: #aaa; font-size: 14px; margin-bottom: 10px; font-weight: bold; }
         canvas#stage { border: 2px solid #555; background: rgba(0,0,0,0.9); width: 300px; height: 85vh; max-height: 800px; }
 
-        /* --- コントローラー修正 --- */
-        #controls { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 12px; 
-            margin: 20px auto; 
-            width: 280px; 
-            touch-action: none; 
-        }
-        .ctrl-btn { 
-            height: 60px; 
-            background: rgba(51, 51, 51, 0.9); 
-            border: 2px solid #555; 
-            color: white; 
-            font-size: 28px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            border-radius: 10px; 
-            user-select: none; 
-            -webkit-tap-highlight-color: transparent; 
-        }
+        #controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px auto; width: 280px; touch-action: none; }
+        .ctrl-btn { height: 60px; background: rgba(51, 51, 51, 0.9); border: 2px solid #555; color: white; font-size: 28px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
         .ctrl-btn:active { background: #666; }
-        .down-btn {
-            grid-column: 2; /* 2段目の真ん中 */
-            background: rgba(80, 80, 80, 0.95);
-        }
+        .down-btn { grid-column: 2; background: rgba(80, 80, 80, 0.95); }
 
-        #ranking-area { background: rgba(0,0,0,0.8); margin-top: 15px; padding: 15px; border-radius: 8px; font-size: 13px; border: 1px solid var(--main-gold); display: none; text-align: left; }
+        #ranking-area { background: rgba(0,0,0,0.9); margin-top: 15px; padding: 15px; border-radius: 8px; font-size: 13px; border: 2px solid var(--main-gold); display: none; text-align: left; }
+        #game-msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.8); color: var(--main-gold); padding: 20px; border-radius: 10px; font-size: 24px; font-weight: bold; display: none; border: 2px solid white; z-index: 100; pointer-events: none; }
+        
         @media (max-width: 900px) { #game-screen { flex-direction: column; align-items: center; } .left-area, .right-area { width: 100%; max-width: 600px; } }
     </style>
 </head>
 <body>
+
+<div id="game-msg">パズル完了</div>
 
 <div id="game-screen">
     <div class="left-area">
@@ -93,15 +73,15 @@
             <b>【遊び方】ミノを10個積み上げて高得点を狙おう</b>
             <ul>
                 <li><span class="icon soft"></span>下まで落ちる</li>
-                <li><span class="icon hard"></span>その場に固定</li>
+                <li><span class="icon hard"></span>空中で固定(足場)</li>
                 <li><span class="icon gold"></span>得点2倍！</li>
                 <li><span class="icon bomb"></span>周りを爆発！</li>
-                <li class="full-row">横一列そろえると一列につき<b>300点ボーナス</b></li>
+                <li class="full-row">横一列で<b>300点</b>。↓キー押しっぱなしで加点！</li>
             </ul>
         </div>
         <div class="main-panel">
             <div class="info-box">
-                HP: <span id="hp">120</span> | 回数: <span id="turns">10</span>
+                HP: <span id="hp">120</span> | 残ターン: <span id="turns">10</span>
                 <span class="high-score">BEST: <span id="high-score">0</span></span>
             </div>
             <div class="panel-grid">
@@ -112,21 +92,21 @@
                     <div class="stat-row">シンプル: <span id="val-c">4.0</span> <div class="stat-bar"><div id="bar-c" class="stat-fill"></div></div></div>
                     <div class="stat-row">得点UP: <span id="val-d">0.0</span> <div class="stat-bar"><div id="bar-d" class="stat-fill gold-fill"></div></div></div>
                     <div class="stat-row">爆弾: <span id="val-e">0.0</span> <div class="stat-bar"><div id="bar-e" class="stat-fill bomb-fill"></div></div></div>
-                    <div class="stat-row">重力: <span id="val-g">1.00</span> <div class="stat-bar"><div id="bar-g" class="stat-fill gravity-fill"></div></div></div>
+                    <div class="stat-row">落下猶予: <span id="val-g">1.00</span> <div class="stat-bar"><div id="bar-g" class="stat-fill gravity-fill"></div></div></div>
                     <div class="preview-area"><canvas id="preview-canvas" width="120" height="120"></canvas></div>
                 </div>
                 <div class="train-col">
                     <h3>トレーニング</h3>
                     <div class="btn-group">
-                        <button onclick="train('A')">バンプアップ (数+1.5~2, 爆弾+0.1) <span class="cost-tag">HP-10</span></button>
-                        <button onclick="train('B')">筋トレ (固さ+1.5~2, 爆弾+0.1) <span class="cost-tag">HP-10</span></button>
-                        <button onclick="train('C')">お気楽思想 (シンプル+1.5~2, 爆弾+0.1) <span class="cost-tag">HP-10</span></button>
-                        <button class="spacer" onclick="train('E')">寄せの手筋 (数+1, ｼﾝﾌﾟﾙ+1, 爆弾+0.2, 固さ半減) <span class="cost-tag">HP-10</span></button>
-                        <button onclick="train('I')">めいそう (ｼﾝﾌﾟﾙ+1.5, 得点+0.5~0.7, 爆弾+0.1~0.3) <span class="cost-tag">HP-20</span></button>
-                        <button onclick="train('D')">輝くひかり (数+1, 得点+0.6~0.8, 爆弾+0.1~0.3) <span class="cost-tag">HP-20</span></button>
+                        <button onclick="train('A')">バンプアップ (数増加, 爆弾+0.1) <span class="cost-tag">HP-10</span></button>
+                        <button onclick="train('B')">筋トレ (固さ増加, 爆弾+0.1) <span class="cost-tag">HP-10</span></button>
+                        <button onclick="train('C')">お気楽思想 (ｼﾝﾌﾟﾙ増加, 爆弾+0.1) <span class="cost-tag">HP-10</span></button>
+                        <button class="spacer" onclick="train('E')">寄せの手筋 (数/ｼﾝﾌﾟﾙ+, 固さ半減) <span class="cost-tag">HP-10</span></button>
+                        <button onclick="train('I')">めいそう (得点UP+, 爆弾+) <span class="cost-tag">HP-20</span></button>
+                        <button onclick="train('D')">輝くひかり (数+, 得点UP+) <span class="cost-tag">HP-20</span></button>
                         <button onclick="train('F')">禁断の錬金術 (得点UP+1, 爆弾+1) <span class="cost-tag">HP-30</span></button>
-                        <button onclick="train('G')">ダイエット (重力-10%, 爆弾-0.6) <span class="cost-tag">HP-15</span></button>
-                        <button onclick="train('H')">超破壊的進展 (数+5, 爆弾+1.2, 他半減) <span class="cost-tag">HP-40</span></button>
+                        <button onclick="train('G')">ダイエット (猶予+20%, 爆弾-0.6) <span class="cost-tag">HP-15</span></button>
+                        <button onclick="train('H')">超破壊的進展 (数+5, 他半減) <span class="cost-tag">HP-40</span></button>
                         <button onclick="train('REST')" style="background:#2e7d32; margin-top:5px;">休憩 (HP+60) <span class="cost-tag" style="color:white">回数-1</span></button>
                     </div>
                 </div>
@@ -138,58 +118,54 @@
         <div id="score-display">0</div>
         <div id="mino-count-display">NEXT: 1 / 10</div>
         <canvas id="stage" width="300" height="900"></canvas>
-        
-        <!-- コントローラー部分 -->
         <div id="controls">
             <div class="ctrl-btn" onmousedown="handleMove(-1,0)" ontouchstart="handleMove(-1,0,event)">←</div>
             <div class="ctrl-btn" style="color:var(--main-cyan)" onmousedown="handleRotate()" ontouchstart="handleRotate(event)">↻</div>
             <div class="ctrl-btn" onmousedown="handleMove(1,0)" ontouchstart="handleMove(1,0,event)">→</div>
-            
             <div class="ctrl-btn down-btn" 
                  onmousedown="startRapidDrop()" onmouseup="stopRapidDrop()" onmouseleave="stopRapidDrop()"
                  ontouchstart="startRapidDrop(event)" ontouchend="stopRapidDrop(event)">↓</div>
         </div>
-
         <div id="ranking-area">
             <h4 style="margin: 0 0 10px 0; color: var(--main-gold); text-align: center;">本日のランキング TOP5</h4>
             <div id="ranking-list"></div>
-            <button onclick="location.reload()" style="width:100%; margin-top:10px; text-align:center;">もう一度遊ぶ</button>
+            <button onclick="location.reload()" style="width:100%; margin-top:10px; text-align:center; background:var(--main-gold); color:black;">もう一度遊ぶ</button>
         </div>
     </div>
 </div>
 
 <script>
-const GAS_URL =https://docs.google.com/spreadsheets/d/14LmdZruDI4Wag7LC4lt4O4vPi5PKujfrJobO8RSy_tk/edit?hl=ja&gid=0#gid=0;
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyDkQuswbQDk6-cCgKDhUzZ6eL4WqHQ4lfnhOjc_A_pQ29tGzBBHvIUXx5u2VylU3HCWg/exec";
 
 const COLS = 20, ROWS = 60, SIZE = 15;
 let stats = { a: 4.0, b: 2.0, c: 4.0, d: 0.0, e: 0.0, g: 1.0 };
 let hp = 120, turns = 10, minoRemaining = 10, minoCount = 0;
 let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-let currentPiece = null, score = 0, isGameOver = false, lastTime = 0, dropIntervalId = null;
+let currentPiece = null, score = 0, isGameOver = false, lastTime = 0, dropIntervalId = null, scoreIntervalId = null;
 let highScore = localStorage.getItem('mino_breeder_highscore') || 0;
 const colors = { hard: "#00ffcc", soft: "#ff4444", gold: "#ffd700", bomb: "#ff4500" };
 
 document.getElementById('high-score').innerText = highScore;
 const rnd = (min, max) => Math.random() * (max - min) + min;
 
-// UI更新（ゲージの計算を修正）
+// ステータス上昇（ログスケール適用）
+function addStat(key, amount) {
+    if (key === 'a') { // 数の増加を減衰させる
+        stats.a += amount / (1 + stats.a * 0.15);
+    } else {
+        stats[key] += amount;
+    }
+}
+
 function updateUI() {
     document.getElementById('hp').innerText = Math.floor(hp);
     document.getElementById('turns').innerText = turns;
     ['a','b','c','d','e','g'].forEach(s => {
         let val = Math.max(0, stats[s]);
         document.getElementById('val-'+s).innerText = val.toFixed(s==='g'?2:1);
-        
-        // ゲージの最大値設定（以前のように0から増えていくように調整）
-        let max = 20; 
-        if(s==='a') max = 40;
-        if(s==='c') max = 30;
-        if(s==='g') {
-            // 重力だけは特殊（1.0から減るのが良いのか増えるのが良いのかによりますが、一旦0-2の範囲で表示）
-            document.getElementById('bar-g').style.width = Math.min(100, (val / 2) * 100) + "%";
-        } else {
-            document.getElementById('bar-'+s).style.width = Math.min(100, (val / max) * 100) + "%";
-        }
+        let max = (s==='a') ? 30 : (s==='c') ? 20 : 10;
+        if(s==='g') max = 5;
+        document.getElementById('bar-'+s).style.width = Math.min(100, (val / max) * 100) + "%";
     });
     updatePreview();
 }
@@ -200,8 +176,9 @@ function generateBlockData() {
     for(let i=0; i < countA; i++) {
         if(i === 0) blocks.push({x: 0, y: 0, type: "soft"});
         else {
-            let targetBlock = (Math.random() * 15 < stats.c) ? [...blocks].sort((a,b)=>(b.x**2+b.y**2)-(a.x**2+a.y**2))[0] : blocks[Math.floor(Math.random()*blocks.length)];
-            for(let d of [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].sort(()=>Math.random()-0.5)) {
+            let targetBlock = (Math.random() * 15 < stats.c) ? [...blocks].sort((a,b)=>(a.x**2+a.y**2)-(b.x**2+b.y**2))[0] : blocks[Math.floor(Math.random()*blocks.length)];
+            let dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].sort(()=>Math.random()-0.5);
+            for(let d of dirs) {
                 let nx = targetBlock.x + d.x, ny = targetBlock.y + d.y;
                 if (!blocks.some(b => b.x === nx && b.y === ny)) { blocks.push({ x: nx, y: ny, type: "soft" }); break; }
             }
@@ -217,7 +194,6 @@ function generateBlockData() {
 
 function updatePreview() {
     const canvas = document.getElementById('preview-canvas');
-    if(!canvas) return;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const blocks = generateBlockData();
@@ -230,22 +206,21 @@ function updatePreview() {
     blocks.forEach(b => { 
         ctx.fillStyle = colors[b.type]; 
         ctx.fillRect(cx+b.x*pSize+1, cy+b.y*pSize+1, pSize-2, pSize-2); 
-        if(b.type==='bomb'){ ctx.fillStyle="white"; ctx.beginPath(); ctx.arc(cx+b.x*pSize+pSize/2, cy+b.y*pSize+pSize/2, pSize/4, 0, 7); ctx.fill(); }
     });
 }
 
 function train(type) {
     if (turns <= 0) return;
     switch(type) {
-        case 'A': if(hp>=10){ stats.a+=rnd(1.5, 2.0); stats.e+=0.1; hp-=10; } break;
-        case 'B': if(hp>=10){ stats.b+=rnd(1.5, 2.0); stats.e+=0.1; hp-=10; } break;
-        case 'C': if(hp>=10){ stats.c+=rnd(1.5, 2.0); stats.e+=0.1; hp-=10; } break;
-        case 'E': if(hp>=10){ stats.a+=1; stats.c+=1; stats.e+=0.2; stats.b/=2; hp-=10; } break;
-        case 'I': if(hp>=20){ stats.c+=1.5; stats.d+=rnd(0.5, 0.7); stats.e+=rnd(0.1, 0.3); hp-=20; } break;
-        case 'D': if(hp>=20){ stats.a+=1; stats.d+=rnd(0.6, 0.8); stats.e+=rnd(0.1, 0.3); hp-=20; } break;
-        case 'F': if(hp>=30){ stats.d+=1; stats.e+=1; hp-=30; } break;
-        case 'G': if(hp>=15){ stats.g*=0.9; stats.e-=0.6; hp-=15; } break;
-        case 'H': if(hp>=40){ stats.a+=5; stats.e+=1.2; stats.b/=2; stats.c/=2; stats.d/=2; hp-=40; } break;
+        case 'A': if(hp>=10){ addStat('a', rnd(1.5, 2.5)); stats.e+=0.1; hp-=10; } break;
+        case 'B': if(hp>=10){ addStat('b', rnd(1.5, 2.5)); stats.e+=0.1; hp-=10; } break;
+        case 'C': if(hp>=10){ addStat('c', rnd(1.5, 2.5)); stats.e+=0.1; hp-=10; } break;
+        case 'E': if(hp>=10){ addStat('a', 1); addStat('c', 1.5); stats.e+=0.2; stats.b/=2; hp-=10; } break;
+        case 'I': if(hp>=20){ addStat('c', 1.5); addStat('d', rnd(0.5, 1)); stats.e+=0.2; hp-=20; } break;
+        case 'D': if(hp>=20){ addStat('a', 1); addStat('d', rnd(0.8, 1.2)); stats.e+=0.2; hp-=20; } break;
+        case 'F': if(hp>=30){ addStat('d', 1.5); addStat('e', 1.5); hp-=30; } break;
+        case 'G': if(hp>=15){ stats.g += 0.5; stats.e-=0.6; hp-=15; } break;
+        case 'H': if(hp>=40){ addStat('a', 5); stats.e+=1.5; stats.b/=2; stats.c/=2; stats.d/=2; hp-=40; } break;
         case 'REST': hp = Math.min(120, hp+60); break;
     }
     turns--; updateUI();
@@ -258,37 +233,46 @@ function finishBreeding() {
 }
 
 function spawnPiece() {
-    if (minoRemaining <= 0) { 
-        isGameOver = true; stopRapidDrop();
-        if(score > highScore) localStorage.setItem('mino_breeder_highscore', score);
-        const name = prompt("ゲーム終了！スコア: " + score + "\nお名前を登録しますか？", "ななし");
-        if(name) submitScore(name, score);
-        else location.reload();
-        return; 
-    }
+    if (minoRemaining <= 0) { endGame(); return; }
     minoCount++;
     document.getElementById('mino-count-display').innerText = "NEXT: " + minoCount + " / 10";
-    currentPiece = { x: Math.floor(COLS/2), y: 2, blocks: generateBlockData() };
+    currentPiece = { x: Math.floor(COLS/2), y: 1, blocks: generateBlockData() };
+    if (checkCollision()) { endGame(); }
     minoRemaining--;
+}
+
+function endGame() {
+    if(isGameOver) return;
+    isGameOver = true;
+    stopRapidDrop();
+    document.getElementById('game-msg').style.display = 'block';
+    if(score > highScore) {
+        highScore = score;
+        localStorage.setItem('mino_breeder_highscore', score);
+    }
+    setTimeout(() => {
+        const name = prompt("パズル完了！スコア: " + score + "\nお名前を登録しますか？", "ななし");
+        if(name) submitScore(name, score);
+        else location.reload();
+    }, 1000);
 }
 
 async function submitScore(name, score) {
     const area = document.getElementById('ranking-area');
     const list = document.getElementById('ranking-list');
     area.style.display = 'block';
-    if(!GAS_URL || GAS_URL.includes("ここに")) {
-        list.innerText = "ランキングURLが未設定です。"; return;
-    }
+    list.innerText = "送信中...";
     try {
         const response = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ name: name.substring(0, 10), score: score }) });
         const data = await response.json();
-        list.innerHTML = data.map((e, i) => `<div>${i+1}位: ${e.name} - ${e.score}点</div>`).join('');
-    } catch (e) { list.innerText = "通信エラー"; }
+        list.innerHTML = data.map((e, i) => `<div>${i+1}位: ${e.name} - ${Math.floor(e.score)}点</div>`).join('');
+    } catch (e) { list.innerText = "通信エラー(URLまたはGASの設定を確認してください)"; }
 }
 
 function gameLoop(time = 0) {
     if (isGameOver) return;
-    if (time - lastTime > (600 / Math.max(0.1, stats.g))) { move(0, 1); lastTime = time; }
+    let gravitySpeed = 400 * stats.g; 
+    if (time - lastTime > gravitySpeed) { move(0, 1); lastTime = time; }
     draw(); requestAnimationFrame(gameLoop);
 }
 
@@ -296,14 +280,11 @@ function draw() {
     const canvas = document.getElementById('stage');
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (let y = 0; y < ROWS; y++) {
-        for (let x = 0; x < COLS; x++) {
-            if (x % 4 === 0 || y % 10 === 0) {
-                ctx.fillStyle = (y % 10 === 0) ? "rgba(255, 255, 255, 0.12)" : "rgba(255, 255, 255, 0.05)";
-                ctx.fillRect(x * SIZE, y * SIZE, SIZE, SIZE);
-            }
-        }
-    }
+    
+    // 背景グリッド
+    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    for(let x=0; x<COLS; x++) ctx.strokeRect(x*SIZE, 0, SIZE, canvas.height);
+
     grid.forEach((row, y) => row.forEach((cell, x) => { if (cell) drawSq(ctx, x, y, cell.type); }));
     if (currentPiece) currentPiece.blocks.forEach(b => drawSq(ctx, currentPiece.x + b.x, currentPiece.y + b.y, b.type));
 }
@@ -311,6 +292,9 @@ function draw() {
 function drawSq(ctx, x, y, type) {
     ctx.fillStyle = colors[type];
     ctx.fillRect(x * SIZE + 1, y * SIZE + 1, SIZE - 2, SIZE - 2);
+    if(type==='bomb'){
+        ctx.fillStyle="white"; ctx.beginPath(); ctx.arc(x*SIZE+SIZE/2, y*SIZE+SIZE/2, SIZE/4, 0, 7); ctx.fill();
+    }
 }
 
 function move(dx, dy) {
@@ -318,7 +302,7 @@ function move(dx, dy) {
     currentPiece.x += dx; currentPiece.y += dy;
     if (checkCollision()) {
         currentPiece.x -= dx; currentPiece.y -= dy;
-        if (dy > 0) { lockPiece(); stopRapidDrop(); }
+        if (dy > 0) { lockPiece(); }
         return false;
     }
     return true;
@@ -339,54 +323,88 @@ function checkCollision() {
 }
 
 function lockPiece() {
-    currentPiece.blocks.forEach(b => {
-        let nx = currentPiece.x + b.x, ny = currentPiece.y + b.y;
-        if (ny >= 0) {
+    const p = currentPiece;
+    p.blocks.forEach(b => {
+        let nx = p.x + b.x, ny = p.y + b.y;
+        if (ny >= 0 && ny < ROWS && nx >= 0 && nx < COLS) {
             grid[ny][nx] = { type: b.type };
             if (b.type === "bomb") {
-                for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
-                    let tx = nx+dx, ty = ny+dy;
-                    if(tx>=0 && tx<COLS && ty>=0 && ty<ROWS) grid[ty][tx] = null;
-                }
+                executeBomb(nx, ny);
             }
         }
     });
-    applyGravity(); calculateScore(); spawnPiece();
+    applyGravity(); 
+    calculateScore(); 
+    spawnPiece();
+    stopRapidDrop();
+}
+
+function executeBomb(nx, ny) {
+    for(let dy=-1; dy<=1; dy++) {
+        for(let dx=-1; dx<=1; dx++) {
+            let tx = nx+dx, ty = ny+dy;
+            if(tx>=0 && tx<COLS && ty>=0 && ty<ROWS) grid[ty][tx] = null;
+        }
+    }
 }
 
 function applyGravity() {
     let moved = true;
     while(moved) {
         moved = false;
-        for (let y = ROWS - 2; y >= 0; y--) for (let x = 0; x < COLS; x++) {
-            if (grid[y][x] && grid[y][x].type !== "hard" && !grid[y+1][x]) {
-                grid[y+1][x] = grid[y][x]; grid[y][x] = null; moved = true;
+        for (let y = ROWS - 2; y >= 0; y--) {
+            for (let x = 0; x < COLS; x++) {
+                // soft と gold だけが落ちる仕様
+                if (grid[y][x] && (grid[y][x].type === "soft" || grid[y][x].type === "gold") && !grid[y+1][x]) {
+                    grid[y+1][x] = grid[y][x];
+                    grid[y][x] = null;
+                    moved = true;
+                }
             }
         }
     }
 }
 
 function calculateScore() {
-    let total = 0;
+    let bonus = 0;
+    let blockScore = 0;
     grid.forEach((row, y) => {
         let count = row.filter(b => b).length;
-        if(count === COLS) total += 300;
-        row.forEach(b => { if(b && b.type === "gold") total += (ROWS-y)*2; else if(b) total += (ROWS-y); });
+        if(count === COLS) bonus += 300;
+        row.forEach(b => {
+            if(b) {
+                let val = (ROWS - y);
+                blockScore += (b.type === "gold") ? val * 2 : val;
+            }
+        });
     });
-    score = total;
-    document.getElementById('score-display').innerText = score;
+    score += bonus + blockScore;
+    document.getElementById('score-display').innerText = Math.floor(score);
 }
 
-// --- コントローラー用関数 ---
 function handleMove(dx, dy, e) { if(e) e.preventDefault(); move(dx, dy); draw(); }
 function handleRotate(e) { if(e) e.preventDefault(); rotate(); draw(); }
+
 function startRapidDrop(e) { 
     if(e) e.preventDefault(); 
     if(dropIntervalId) return; 
-    move(0,1); draw();
+    
+    // 下入力中のスコア加算タイマー
+    scoreIntervalId = setInterval(() => {
+        score += 10;
+        document.getElementById('score-display').innerText = Math.floor(score);
+    }, 100);
+
     dropIntervalId = setInterval(() => { move(0,1); draw(); }, 50); 
 }
-function stopRapidDrop(e) { if(e) e.preventDefault(); clearInterval(dropIntervalId); dropIntervalId = null; }
+
+function stopRapidDrop(e) { 
+    if(e) e.preventDefault(); 
+    clearInterval(dropIntervalId); 
+    clearInterval(scoreIntervalId);
+    dropIntervalId = null; 
+    scoreIntervalId = null;
+}
 
 updateUI();
 </script>
