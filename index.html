@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ミノ・ブリーダー v38 </title>
+    <title>ミノ・ブリーダー v39 - Online Ranking</title>
     <style>
         :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; }
         
@@ -14,7 +14,6 @@
             background-attachment: fixed;
             background-position: center;
             color: white; font-family: sans-serif; margin: 0; padding: 10px; 
-            /* スマホでの誤操作防止 */
             user-select: none;
             -webkit-user-select: none;
         }
@@ -68,6 +67,10 @@
         #controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; width: 300px; margin-left: auto; margin-right: auto; touch-action: none;}
         .ctrl-btn { height: 60px; background: rgba(51, 51, 51, 0.9); border: 2px solid #555; color: white; font-size: 28px; display: flex; align-items: center; justify-content: center; border-radius: 10px; user-select: none; backdrop-filter: blur(5px); -webkit-tap-highlight-color: transparent; }
         .ctrl-btn:active { background: rgba(85, 85, 85, 0.9); }
+
+        /* ランキングエリア */
+        #ranking-area { background: rgba(0,0,0,0.8); margin-top: 15px; padding: 15px; border-radius: 8px; font-size: 13px; border: 1px solid var(--main-gold); display: none; text-align: left; }
+        #ranking-list div { margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 3px; }
 
         @media (max-width: 900px) {
             #game-screen { flex-direction: column; align-items: center; }
@@ -143,16 +146,26 @@
             <div></div>
             <div class="ctrl-btn" style="color:var(--main-cyan)" onmousedown="handleControlRotate(event)" ontouchstart="handleControlRotate(event)">↻</div>
         </div>
+
+        <!-- ランキング表示 -->
+        <div id="ranking-area">
+            <h4 style="margin: 0 0 10px 0; color: var(--main-gold); text-align: center;">本日のランキング TOP5</h4>
+            <div id="ranking-list">読み込み中...</div>
+            <button onclick="location.reload()" style="width:100%; margin-top:10px; text-align:center;">もう一度遊ぶ</button>
+        </div>
     </div>
 </div>
 
 <script>
+// --- 【重要】GASのURLをここに貼り付けてください ---
+const GAS_URL = https://docs.google.com/spreadsheets/d/14LmdZruDI4Wag7LC4lt4O4vPi5PKujfrJobO8RSy_tk/edit?hl=ja&gid=0#gid=0;
+
 const COLS = 20, ROWS = 60, SIZE = 15;
 let stats = { a: 4.0, b: 2.0, c: 4.0, d: 0.0, e: 0.0, g: 1.0 };
 let hp = 120, maxHp = 120, turns = 10, minoRemaining = 10, minoCount = 0;
 let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
 let currentPiece = null, score = 0, isGameOver = false, lastTime = 0;
-let dropIntervalId = null; // 長押し用
+let dropIntervalId = null;
 let highScore = localStorage.getItem('mino_breeder_highscore') || 0;
 const colors = { hard: "#00ffcc", soft: "#ff4444", gold: "#ffd700", bomb: "#ff4500" };
 
@@ -238,13 +251,48 @@ function spawnPiece() {
     if (minoRemaining <= 0) { 
         isGameOver = true; 
         stopRapidDrop();
-        if(score > highScore) localStorage.setItem('mino_breeder_highscore', score);
-        alert("Game Over! Score: " + score); location.reload(); return; 
+        if(score > highScore) {
+            localStorage.setItem('mino_breeder_highscore', score);
+            document.getElementById('high-score').innerText = score;
+        }
+        
+        // ランキング送信フェーズへ
+        const playerName = prompt("育成終了！スコア: " + score + "\nランキングに登録する名前を入力してください", "ななし");
+        if(playerName) {
+            submitScore(playerName, score);
+        } else {
+            alert("Game Over! Score: " + score);
+            location.reload();
+        }
+        return; 
     }
     minoCount++;
     document.getElementById('mino-count-display').innerText = "NEXT: " + minoCount + " / 10";
     currentPiece = { x: Math.floor(COLS/2), y: 2, blocks: generateBlockData() };
     minoRemaining--;
+}
+
+async function submitScore(name, score) {
+    const area = document.getElementById('ranking-area');
+    const list = document.getElementById('ranking-list');
+    area.style.display = 'block';
+    
+    if(!GAS_URL || GAS_URL.includes("ここに")) {
+        list.innerText = "※GASのURLが設定されていないため表示できません。";
+        return;
+    }
+
+    try {
+        const response = await fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify({ name: name.substring(0, 10), score: score })
+        });
+        const data = await response.json();
+        list.innerHTML = data.map((entry, i) => `<div>${i+1}位: ${entry.name} - ${entry.score}点</div>`).join('');
+    } catch (e) {
+        list.innerText = "ランキングの取得に失敗しました。";
+        console.error(e);
+    }
 }
 
 function gameLoop(time = 0) {
@@ -258,18 +306,16 @@ function draw() {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // --- 4列ごと、10行ごとのガイド塗り ---
+    // --- ガイドガイドラインの描画 ---
     for (let y = 0; y < ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
-            let isVerticalGuide = (x % 2 === 0);   // 2列ごとに縦ライン
-            let isHorizontalGuide = (y % 40 === 0); // 10行ごとに横ライン
+            let isVerticalGuide = (x % 4 === 0);   // 4列ごとに縦
+            let isHorizontalGuide = (y % 10 === 0); // 10行ごとに横
 
             if (isVerticalGuide || isHorizontalGuide) {
-                // ガイドラインの色を設定（縦横が重なる場所は少し濃くなる）
                 ctx.fillStyle = isHorizontalGuide 
-                    ? "rgba(200, 255, 200, 0.15)" // 横ライン（高さの節目）を少し強調
-                    : "rgba(255, 255, 255, 0.7)"; // 縦ラインは控えめに
-                
+                    ? "rgba(255, 255, 255, 0.12)" 
+                    : "rgba(255, 255, 255, 0.05)";
                 ctx.fillRect(x * SIZE, y * SIZE, SIZE, SIZE);
             }
         }
@@ -301,10 +347,7 @@ function move(dx, dy) {
     currentPiece.x += dx; currentPiece.y += dy;
     if (checkCollision()) {
         currentPiece.x -= dx; currentPiece.y -= dy;
-        if (dy > 0) {
-            lockPiece();
-            stopRapidDrop(); // ロックされたら加速を停止
-        }
+        if (dy > 0) { lockPiece(); stopRapidDrop(); }
         return false;
     }
     return true;
@@ -365,7 +408,7 @@ function calculateScore() {
     document.getElementById('score-display').innerText = score;
 }
 
-// PC用キーボード
+// コントロール
 window.addEventListener('keydown', e => {
     if (!currentPiece || isGameOver) return;
     if (e.key === 'ArrowLeft') move(-1, 0);
@@ -374,23 +417,16 @@ window.addEventListener('keydown', e => {
     if (e.code === 'Space' || e.key === 'ArrowUp') { rotate(); e.preventDefault(); }
 });
 
-// スマホ・マウス用コントロール関数
-function handleControlMove(dx, dy,e) {
+function handleControlMove(dx, dy, e) {
     if (e && e.type === 'touchstart') e.preventDefault();
-    move(dx, dy);
-    draw();
+    move(dx, dy); draw();
 }
 
 function handleControlRotate(e) {
     if (e && e.type === 'touchstart') e.preventDefault();
-    if(!currentPiece) return;
-    const old = currentPiece.blocks;
-    currentPiece.blocks = currentPiece.blocks.map(b => ({x: -b.y, y: b.x, type: b.type}));
-    if(checkCollision()) currentPiece.blocks = old;
-    draw();
+    rotate(); draw();
 }
 
-// 下ボタン長押し（高速落下）の実装
 function startRapidDrop(e) { 
     if (e && e.type === 'touchstart') e.preventDefault();
     if(dropIntervalId || isGameOver) return; 
