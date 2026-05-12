@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ミノ・ブリーダー 45</title>
+    <title>ミノ・ブリーダー46 -/title>
     <style>
         :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; }
         body { 
@@ -153,7 +153,6 @@
         </div>
     </div>
     <div class="right-area">
-        <div id="mino-count-display">NEXT: 1 / 10</div>
         <canvas id="stage" width="300" height="900"></canvas>
         <div id="controls">
             <div class="ctrl-btn" onmousedown="handleMove(-1,0)" ontouchstart="handleMove(-1,0,event)">←</div>
@@ -322,7 +321,6 @@ function finishBreeding() {
 function spawnPiece() {
     if (minoRemaining <= 0) { endGame(); return; }
     minoCount++;
-    document.getElementById('mino-count-display').innerText = "NEXT: " + minoCount + " / 10";
     currentPiece = { x: Math.floor(COLS/2), y: 1, blocks: generateBlockData() };
     if (checkCollision()) { endGame(); }
     minoRemaining--;
@@ -367,6 +365,21 @@ function gameLoop(time = 0) {
     draw(); requestAnimationFrame(gameLoop);
 }
  
+// ゴーストの落下先Y座標を計算
+function getGhostY() {
+    if (!currentPiece) return null;
+    let ghostY = currentPiece.y;
+    while (true) {
+        ghostY++;
+        const hit = currentPiece.blocks.some(b => {
+            let nx = currentPiece.x + b.x, ny = ghostY + b.y;
+            return nx < 0 || nx >= COLS || ny >= ROWS || (ny >= 0 && grid[ny][nx]);
+        });
+        if (hit) { ghostY--; break; }
+    }
+    return ghostY;
+}
+ 
 function draw() {
     const canvas = document.getElementById('stage');
     const ctx = canvas.getContext('2d');
@@ -375,13 +388,32 @@ function draw() {
     ctx.strokeStyle = "rgba(255,255,255,0.05)";
     for(let x=0; x<COLS; x++) ctx.strokeRect(x*SIZE, 0, SIZE, canvas.height);
  
+    // ミノカウント（スコアより上、キャンバス上部40%あたり）
+    ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+    ctx.font = "bold 36px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(minoCount + " / 10", canvas.width/2, canvas.height * 0.38);
+ 
+    // スコア（中央やや下）
     ctx.fillStyle = "rgba(255, 215, 0, 0.2)";
     ctx.font = "bold 60px sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(Math.floor(score), canvas.width/2, canvas.height/2);
  
     grid.forEach((row, y) => row.forEach((cell, x) => { if (cell) drawSq(ctx, x, y, cell.type); }));
-    if (currentPiece) currentPiece.blocks.forEach(b => drawSq(ctx, currentPiece.x + b.x, currentPiece.y + b.y, b.type));
+ 
+    // ゴースト描画（ミノと同じ色で半透明、実ミノと離れた位置のみ）
+    if (currentPiece) {
+        const ghostY = getGhostY();
+        if (ghostY !== currentPiece.y) {
+            ctx.save();
+            ctx.globalAlpha = 0.25;
+            currentPiece.blocks.forEach(b => drawSq(ctx, currentPiece.x + b.x, ghostY + b.y, b.type));
+            ctx.restore();
+        }
+        // 実ミノを最後に描画（ゴーストの上に重なるように）
+        currentPiece.blocks.forEach(b => drawSq(ctx, currentPiece.x + b.x, currentPiece.y + b.y, b.type));
+    }
 }
  
 function drawSq(ctx, x, y, type, px=null, py=null, ps=null) {
@@ -495,7 +527,7 @@ function calculateScore() {
     let blockScore = 0;
     grid.forEach((row, y) => {
         let count = row.filter(b => b).length;
-        if(count === COLS) bonus += 300;
+        if(count === COLS) bonus += 1500;
         row.forEach(b => {
             if(b) {
                 let val = (ROWS - y);
@@ -512,7 +544,7 @@ function handleRotate(e) { if(e) e.preventDefault(); rotate(); draw(); }
 function startRapidDrop(e) { 
     if(e) e.preventDefault(); 
     if(dropIntervalId) return; 
-    scoreIntervalId = setInterval(() => { score += 10; }, 100);
+    scoreIntervalId = setInterval(() => { score += 7; }, 100);
     dropIntervalId = setInterval(() => { move(0,1); draw(); }, 50); 
 }
  
