@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ミノ・ブリーダー 46</title>
+    <title>ミノ・ブリーダー v47</title>
     <style>
         :root { --main-gold: #ffd700; --main-cyan: #00ffcc; --main-red: #ff4444; }
         body { 
@@ -112,7 +112,7 @@
                 <li><span class="icon hard"></span>空中で固定(足場)</li>
                 <li><span class="icon gold"></span>得点2倍！</li>
                 <li><span class="icon bomb"></span>周りを爆発！</li>
-                <li class="full-row">横一列で <b>300点</b> ／ ↓ : 高速落下（押しっぱなしでスコア加点）</li>
+                <li class="full-row">横一列で <b>1000点</b> ／ ↓ : 高速落下（押しっぱなしでスコア加点）</li>
             </ul>
         </div>
         <div class="main-panel">
@@ -134,15 +134,15 @@
                 <div class="train-col">
                     <h3>トレーニング</h3>
                     <div class="btn-group">
-                        <button onclick="train('A')">バンプアップ (数増加, 爆弾+0.1) <span class="cost-tag">HP-10</span></button>
-                        <button onclick="train('B')">筋トレ (固さ増加, 爆弾+0.1) <span class="cost-tag">HP-10</span></button>
-                        <button onclick="train('C')">お気楽思想 (ｼﾝﾌﾟﾙ増加, 爆弾+0.1) <span class="cost-tag">HP-10</span></button>
-                        <button class="spacer" onclick="train('E')">寄せの手筋 (数/ｼﾝﾌﾟﾙ+, 固さ半減) <span class="cost-tag">HP-10</span></button>
-                        <button onclick="train('I')">めいそう (得点UP+, 爆弾+) <span class="cost-tag">HP-20</span></button>
+                        <button onclick="train('A')">バンプアップ (数++, 爆弾+) <span class="cost-tag">HP-10</span></button>
+                        <button onclick="train('B')">筋トレ (固さ++, 爆弾+) <span class="cost-tag">HP-10</span></button>
+                        <button onclick="train('C')">お気楽思想 (ｼﾝﾌﾟﾙ++, 爆弾+) <span class="cost-tag">HP-10</span></button>
+                        <button class="spacer" onclick="train('E')">寄せの手筋 (数/シンプル++, 固さ半減) <span class="cost-tag">HP-10</span></button>
+                        <button onclick="train('I')">めいそう (シンプル++,得点UP++, 爆弾++) <span class="cost-tag">HP-20</span></button>
                         <button onclick="train('D')">輝くひかり (数+, 得点UP+) <span class="cost-tag">HP-20</span></button>
-                        <button onclick="train('F')">禁断の錬金術 (得点UP+1, 爆弾+1) <span class="cost-tag">HP-30</span></button>
-                        <button onclick="train('G')">ダイエット (猶予+20%, 爆弾-0.6) <span class="cost-tag">HP-15</span></button>
-                        <button onclick="train('H')">超破壊的進展 (数+5, 他半減) <span class="cost-tag">HP-40</span></button>
+                        <button onclick="train('F')">禁断の錬金術 (得点UP+, 爆弾+) <span class="cost-tag">HP-30</span></button>
+                        <button onclick="train('G')">ダイエット (猶予+, 爆弾-) <span class="cost-tag">HP-15</span></button>
+                        <button onclick="train('H')">超破壊的進展 (数+++, 他半減,爆弾++) <span class="cost-tag">HP-40</span></button>
                         <button onclick="train('REST')" style="background:#2e7d32; margin-top:5px;">休憩 (HP+60) <span class="cost-tag" style="color:white">回数-1</span></button>
                     </div>
                     <!-- ★修正1: HP不足メッセージ表示エリア -->
@@ -177,7 +177,11 @@ const COLS = 20, ROWS = 60, SIZE = 15;
 let stats = { a: 4.0, b: 2.0, c: 4.0, d: 0.0, e: 0.0, g: 1.0 };
 let hp = 120, turns = 10, minoRemaining = 10, minoCount = 0;
 let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-let currentPiece = null, score = 0, isGameOver = false, lastTime = 0, dropIntervalId = null, scoreIntervalId = null;
+let currentPiece = null, isGameOver = false, lastTime = 0, dropIntervalId = null, scoreIntervalId = null;
+let gridScore = 0;   // グリッド状態から毎回再計算（上書き）
+let lineScore = 0;   // 揃っている列数 × 1500（毎回再計算・上書き）
+let dropScore = 0;   // 落下ボーナス（累計加算）
+function getScore() { return gridScore + lineScore + dropScore; }
 let highScore = localStorage.getItem('mino_breeder_highscore') || 0;
 const colors = { hard: "#00ffcc", soft: "#ff4444", gold: "#ffd700", bomb: "#333333" };
  
@@ -201,12 +205,12 @@ window.addEventListener('keyup', e => { if(e.key === 'ArrowDown') stopRapidDrop(
  
 const rnd = (min, max) => Math.random() * (max - min) + min;
  
-// ★修正: 15以上のときだけ緩やかな減衰（全ステータス共通）
+// 13以上のときだけ2乗で急速に減衰（全ステータス共通）
 function addStat(key, amount) {
     const val = stats[key];
-    if (val >= 15) {
-        const excess = val - 15;
-        stats[key] += amount / (1 + excess * 0.08);
+    if (val >= 13) {
+        const excess = val - 13;
+        stats[key] += amount / (1 + excess * excess * 0.08);
     } else {
         stats[key] += amount;
     }
@@ -331,13 +335,13 @@ function endGame() {
     isGameOver = true;
     stopRapidDrop();
     document.getElementById('game-msg').style.display = 'block';
-    if(score > highScore) {
-        highScore = score;
-        localStorage.setItem('mino_breeder_highscore', score);
+    if(getScore() > highScore) {
+        highScore = getScore();
+        localStorage.setItem('mino_breeder_highscore', getScore());
     }
     setTimeout(() => {
-        const name = prompt("パズル完了！スコア: " + score + "\nお名前を登録しますか？", "ななし");
-        if(name) submitScore(name, score);
+        const name = prompt("パズル完了！スコア: " + getScore() + "\nお名前を登録しますか？", "ななし");
+        if(name) submitScore(name, getScore());
         else location.reload();
     }, 1000);
 }
@@ -398,7 +402,7 @@ function draw() {
     ctx.fillStyle = "rgba(255, 215, 0, 0.2)";
     ctx.font = "bold 60px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(Math.floor(score), canvas.width/2, canvas.height/2);
+    ctx.fillText(Math.floor(getScore()), canvas.width/2, canvas.height/2);
  
     grid.forEach((row, y) => row.forEach((cell, x) => { if (cell) drawSq(ctx, x, y, cell.type); }));
  
@@ -523,19 +527,21 @@ function applyGravity() {
 }
  
 function calculateScore() {
-    let bonus = 0;
-    let blockScore = 0;
+    let newGridScore = 0;
+    let newLineScore = 0;
     grid.forEach((row, y) => {
         let count = row.filter(b => b).length;
-        if(count === COLS) bonus += 1500;
+        if(count === COLS) newLineScore += 1000;
         row.forEach(b => {
             if(b) {
                 let val = (ROWS - y);
-                blockScore += (b.type === "gold") ? val * 2 : val;
+                newGridScore += (b.type === "gold") ? val * 2 : val;
             }
         });
     });
-    score += bonus + blockScore;
+    gridScore = newGridScore;   // 毎回上書き
+    lineScore = newLineScore;   // 揃っている列を毎回再計算（爆弾で崩れたら減る）
+    // dropScore はここでは触らない（累計のまま）
 }
  
 function handleMove(dx, dy, e) { if(e) e.preventDefault(); move(dx, dy); draw(); }
@@ -544,7 +550,7 @@ function handleRotate(e) { if(e) e.preventDefault(); rotate(); draw(); }
 function startRapidDrop(e) { 
     if(e) e.preventDefault(); 
     if(dropIntervalId) return; 
-    scoreIntervalId = setInterval(() => { score += 7; }, 100);
+    scoreIntervalId = setInterval(() => { dropScore += 5; }, 100);
     dropIntervalId = setInterval(() => { move(0,1); draw(); }, 50); 
 }
  
@@ -560,4 +566,3 @@ updateUI();
 </script>
 </body>
 </html>
- 
